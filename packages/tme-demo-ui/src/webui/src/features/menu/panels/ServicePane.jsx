@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { COMMIT_MANAGER_URL } from 'constants/Layout';
@@ -30,14 +30,14 @@ function ServicePane({ keypath, children, title, label, ...rest }) {
   const isOpen = useSelector((state) => getOpenService(state) === keypath);
   const fade = useSelector((state) => !!getOpenService(state));
 
-  const highlightedIcons = isOpen ? data : [];
+  const highlightedIcons = useMemo(() => isOpen ? data : [], [ isOpen, data ]);
 
   const dispatch = useDispatch();
   const toggled = useCallback(keypath => dispatch(
-    serviceToggled({ keypath, highlightedIcons })
+    serviceToggled({ keypath, highlightedIcons: [] })
   ));
 
-  useEffect(() => dispatch(
+  useEffect(() => isOpen && dispatch(
     highlightedIconsUpdated({ highlightedIcons })
   ), [ highlightedIcons ]);
 
