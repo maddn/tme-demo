@@ -68,7 +68,7 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
     end: (item, monitor) => {
       dispatch(itemDragged(undefined));
       if (monitor.didDrop()) {
-        setNewItemOpen(true);
+        openNewItem();
         setItemDefaults(monitor.getDropResult().itemDefaults);
       }
     },
@@ -92,7 +92,7 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
                 ref={btnRef}
                 icon={BTN_ADD}
                 classSuffix="create"
-                tooltip={`Add New ${label}`}
+                tooltip={`Add New ${label}${newItemDragType ? ' (drag me)' : ''}`}
                 onClick={openNewItem}
               /></div>)}
               <NewItem
