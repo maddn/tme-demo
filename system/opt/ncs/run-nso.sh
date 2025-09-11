@@ -46,6 +46,9 @@ mkdir -p /var/log/ncs
 # start syslog-ng to stop everything getting sent to stdout
 syslog-ng --no-caps
 
+# start SSH service so logs can be accessed easily
+service ssh start
+
 # pre-start scripts
 for file in $(ls /etc/ncs/pre-ncs-start.d/*.sh 2>/dev/null); do
     echo "run-nso.sh: running pre start script ${file}"

@@ -10,6 +10,7 @@ RUN apt-get update \
      make \
      nodejs \
      openssh-client \
+     openssh-server \
      procps \
      python3 \
      python3-pip \
@@ -155,12 +156,22 @@ CMD ["/opt/ncs/run-nso.sh"]
 
 FROM deb-base AS nso-run
 
+ARG USER_NAME=cisco
+ARG PASSWORD=cisco
+
 COPY --from=nso-build /etc/profile.d /etc/profile.d
 COPY --from=nso-build /etc/logrotate.d/ncs /etc/logrotate.d/.
 COPY --from=nso-build /etc/ncs /etc/ncs/
 COPY --from=nso-build /opt/ncs /opt/ncs/
 COPY --from=nso-build /var/opt/ncs /var/opt/ncs
 COPY --from=nso-build /root /root
+
+RUN useradd --no-log-init \
+          --create-home \
+          --shell /bin/bash \
+          --groups sudo,adm \
+          ${USER_NAME} && \
+  echo "${USER_NAME}:${PASSWORD}" | chpasswd
 
 EXPOSE 22 80 443 830 4000
 
