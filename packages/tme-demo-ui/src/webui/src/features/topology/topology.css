@@ -171,21 +171,6 @@
   z-index: 3;
 }
 
-.icon__vnf-connection {
-  background: Teal;
-  opacity: 0;
-  position: absolute;
-  pointer-events: none;
-  transition-property: top, left, bottom, height, opacity;
-  transition-duration: 500ms, 500ms, 500ms, 500ms, 500ms;
-  transform: translateX(-50%);
-  z-index: 3;
-}
-
-.icon__vnf-connection--expanded {
-  opacity: 1;
-}
-
 .icon__container {
   opacity: 1;
   pointer-events: none;
@@ -235,10 +220,6 @@
   pointer-events: none;
   position: relative;
   text-align: center;
-}
-
-.icon__label--vnf {
-  margin-top: -1.25em;
 }
 
 .icon__label-text {

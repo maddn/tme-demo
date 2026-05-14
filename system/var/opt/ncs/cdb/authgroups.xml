@@ -1,22 +1,6 @@
 <devices xmlns="http://tail-f.com/ns/ncs">
   <authgroups>
     <group>
-      <name>asa</name>
-      <default-map>
-        <remote-name>admin</remote-name>
-        <remote-password>admin</remote-password>
-        <remote-secondary-password>admin</remote-secondary-password>
-      </default-map>
-    </group>
-    <group>
-      <name>csr</name>
-      <default-map>
-        <remote-name>admin</remote-name>
-        <remote-password>admin</remote-password>
-        <remote-secondary-password>admin</remote-secondary-password>
-      </default-map>
-    </group>
-    <group>
       <name>default</name>
       <default-map>
         <remote-name>admin</remote-name>

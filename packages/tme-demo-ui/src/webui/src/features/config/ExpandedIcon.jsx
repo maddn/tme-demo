@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 import Config from './Config';
 
 import { usePlatformsQuery, useIcon } from 'features/topology/Icon';
-import { useNsInfoVnfs } from 'features/topology/Vnf';
 import { getOpenServiceName } from 'features/menu/menuSlice';
 
 
@@ -16,12 +15,11 @@ const ExpandedIcon = memo(function ExpandedIcon({ name }) {
   if (!icon) {
     console.error(`Missing icon ${name}`);
   }
-  const { device, nsInfo } = icon ||{} ;
-  const vnfs = useNsInfoVnfs(nsInfo);
+  const { device } = icon ||{} ;
   const openService = useSelector((state) => getOpenServiceName(state));
   const platforms = usePlatformsQuery().data;
 
-  const devices = device ? [ device ] : vnfs.flatMap(vnf => vnf.vmDevices.map(vm => vm.name));
+  const devices = device ? [ device ] : [];
 
   return (
     devices.filter(device =>

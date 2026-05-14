@@ -18,11 +18,6 @@ NETWORK="\
   create-network packages/cisco-ios      2 sw \
   create-network packages/dell-ftos      1 sw"
 
-if [ "${REAL_ESC}" != "true" ]; then
-  NETWORK="${NETWORK} \
-  create-network packages/esc            1 esc"
-fi
-
 cp --backup ${NETSIM_DATA_DIR}/ios.xml packages/cisco-ios/netsim
 cp ${NETSIM_DATA_DIR}/iosxr.xml packages/cisco-iosxr/netsim
 cp ${NETSIM_DATA_DIR}/nexus.xml packages/cisco-nx/netsim

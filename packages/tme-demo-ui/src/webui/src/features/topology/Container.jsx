@@ -1,9 +1,7 @@
 import React from 'react';
 import { useContext } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useDrop } from 'react-dnd';
 import classNames from 'classnames';
-import { NETWORK_SERVICE } from '../../constants/ItemTypes';
 
 import * as IconTypes from 'constants/Icons';
 
@@ -12,16 +10,6 @@ import InlineBtn from '../common/buttons/InlineBtn';
 import { getDraggedItem, getVisibleUnderlays, getZoomedContainer,
          underlayToggled, containerZoomToggled } from './topologySlice';
 import { LayoutContext } from './LayoutContext';
-
-import { getOpenServiceName } from '../menu/menuSlice';
-
-const getNetworkServiceDefaults = (tenant, container, pos) => [
-    { path: 'ns-info', value: `${tenant}-`, prefix: true },
-    { path: 'type', value: IconTypes.SERVICE_CHAIN },
-    { path: 'container', value: container },
-    { path: 'coord/x', value: pos.x },
-    { path: 'coord/y', value: pos.y }
-];
 
 function Container(props) {
   console.debug('Container Render');
@@ -37,26 +25,8 @@ function Container(props) {
 
   const zoomedContainer = useSelector((state) => getZoomedContainer(state));
   const draggedItem = useSelector((state) => getDraggedItem(state));
-  const openServiceName = useSelector((state) => getOpenServiceName(state));
   const underlayVisible = useSelector(
     (state) => getVisibleUnderlays(state).includes(name));
-
-  const [ collectedProps, drop ] = useDrop(() => ({
-    accept: NETWORK_SERVICE,
-    drop: (item, monitor) => {
-      const { x, y } = monitor.getClientOffset();
-      return ({ itemDefaults: getNetworkServiceDefaults(
-        openServiceName, name, layout.pxToPc({
-          x: x - layout.dimensions.left,
-          y: y - layout.dimensions.top
-        }, name)) });
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver()
-    })
-  }), [ layout ]);
-
-  const { isOver } = collectedProps;
 
   return (
     <div
@@ -98,14 +68,13 @@ function Container(props) {
             />
           </div>
       </div>
-      {drop(<div className={classNames(
+      <div className={classNames(
         'component__layer', 'container__overlay', {
         'container__overlay--inactive':
           draggedItem?.container && draggedItem?.container !== name,
         'container__overlay--dragging':
-          draggedItem && draggedItem?.icon === 'new-item',
-        'container__overlay--hovered': isOver
-      })}/>)}
+          draggedItem && draggedItem?.icon === 'new-item'
+      })}/>
     </div>
   );
 }

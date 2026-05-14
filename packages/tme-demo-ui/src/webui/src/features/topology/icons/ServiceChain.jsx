@@ -1,19 +1,6 @@
 import React from 'react';
 import { STROKE, SERVICE_CHAIN } from '../../../constants/Colours';
 
-/* Symbols don't appear correctly when dragging in IE and Edge.
-      <symbol id={`link-${background}`} width="160" height="160">
-        <rect
-          fill="White"
-          x="0" y="5" rx="50" ry="50" width="160" height="150"
-        />
-        <rect
-          fill={background}
-          x="35" y="40" rx="25" ry="25" width="90" height="80"
-        />
-      </symbol>
-*/
-
 export default function({ size, colour }) {
   const background = colour ? colour : SERVICE_CHAIN;
   return (
@@ -25,7 +12,6 @@ export default function({ size, colour }) {
       width={`${size}px`}
       height={`${size}px`}
     >
-
       <circle
         className="topology__svg-icon-circle"
         stroke={STROKE} strokeWidth="10" fill={background}

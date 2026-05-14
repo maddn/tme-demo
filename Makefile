@@ -9,22 +9,6 @@
 
 # DEPENDENCIES
 #
-# This demo depends on the Resource Manager and NFVO projects / function packs.
-# The individual packages from these function packs should be extracted
-# and placed in system/opt/ncs/packages (in the extracted directory format).
-# Once done, the following directories should be present:
-#
-#  ▾ tme-demo/
-#    ▾ system/
-#      ▾ opt/
-#        ▾ ncs/
-#          ▾ packages/
-#            ▸ cisco-etsi-nfvo/
-#            ▸ esc/
-#            ▸ etsi-sol003-gen-1.13/
-#            ▸ openstack-cos-gen-4.2/
-#            ▸ resource-manager/
-#
 # For a local install, NSO should be pre-installed. To build a docker image,
 # the NSO installer binary should be placed in the nso-install-file directory.
 # Only one file should be placed in this directory.
@@ -56,14 +40,8 @@
 
 .SUFFIXES:
 
-REAL_ESC = false
-
 all: packages ncs-cdb netsim
 .PHONY: all
-
-all-real-esc: override REAL_ESC := true
-all-real-esc: all
-.PHONY: real-esc
 
 clean: clean-packages clean-cdb clean-netsim
 .PHONY: clean
@@ -143,8 +121,6 @@ dist: stop clean
 	  --exclude='*.swp' \
 	  --exclude='.*' \
 	  --exclude='node_modules' \
-	  --exclude='resource-manager/doc' \
-	  --exclude='resource-manager/test' \
 	  $(demo_dir); \
 	gzip -9 $(demo_dir).tar
 .PHONY: dist
@@ -225,9 +201,9 @@ docker-wait-started:
 # pre-compiled, they are copied to the packages directory and compiled.
 #
 # included-packages:
-# The external package dependencies are mentioned at the top of this file.
-# These are already pre-compiled and should be placed in
-# system/opt/ncs/packages where they are symlinked to the packages directory.
+# External pre-compiled package dependencies can be placed in
+# system/opt/ncs/packages and they will be symlinked to the packages directory.
+# However there are currently no external package dependencies.
 #
 # demo packages
 # The tme-demo (and tme-demo-ui) source package is already in the packages

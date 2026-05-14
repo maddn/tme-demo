@@ -25,8 +25,6 @@ YANGPATH += ../../cisco-ios/src/ncsc-out/modules/yang \
 	          ../../cisco-nx/src \
 	          ../../dell-ftos/src/ncsc-out/modules/yang \
 	          ../../dell-ftos/src \
-	          ../../cisco-etsi-nfvo/src/yang \
-	          ../../resource-manager/src/yang \
 	          ../../l3vpn/src/yang
 
 NCSCPATH   = $(YANGPATH:%=--yangpath %)

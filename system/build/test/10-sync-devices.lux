@@ -57,10 +57,6 @@
         result true
     }
     sync-result {
-        device esc0
-        result true
-    }
-    sync-result {
         device p0
         result true
     }

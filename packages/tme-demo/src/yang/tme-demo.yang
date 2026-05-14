@@ -57,21 +57,6 @@ module tme-demo {
     prefix force10-ned-id;
   }
 
-
-  // Package depenencies
-  import cisco-etsi-nfvo {
-    prefix cisco-nfvo;
-  }
-  import etsi-nfv-descriptors {
-    prefix nfv;
-  }
-  import resource-allocator {
-    prefix ralloc;
-  }
-  import ipaddress-allocator {
-    prefix ipalloc;
-  }
-
   identity l3vpn {
     base ncs:plan-component-type;
     description "L3VPN plan component";
@@ -80,29 +65,6 @@ module tme-demo {
   identity data-centre {
     base ncs:plan-component-type;
     description "Data-centre plan component";
-  }
-
-  identity network-service {
-    base ncs:plan-component-type;
-    description "Network service plan component";
-  }
-
-  identity ip-addresses-allocated {
-    base ncs:plan-state;
-    description "Network service component state - " +
-                "IP addresses have benn allocated";
-  }
-
-  identity vnfs-instantiated {
-    base ncs:plan-state;
-    description "Network service component state - " +
-                "all VNFS have been spun up";
-  }
-
-  identity topology-created {
-    base ncs:plan-state;
-    description "Network service component state - " +
-                "topoloogy connections have been created";
   }
 
   typedef config-format {
@@ -201,37 +163,7 @@ module tme-demo {
     }
   }
 
-  grouping sap-topology-connection-grouping {
-    leaf sapd {
-      type leafref {
-        path "deref(../../nsd)/../nfv:sapd/nfv:id";
-      }
-    }
-
-    leaf device {
-      type leafref {
-        path "/ncs:devices/ncs:device/ncs:name";
-      }
-    }
-
-    uses interface-leafrefs-grouping;
-  }
-
   container tme-demo {
-    list default-ns-topology-connections {
-      key nsd;
-      leaf nsd {
-        type leafref {
-          path "/nfv:nfv/nfv:nsd/nfv:id";
-        }
-      }
-
-      list sap-topology-connection {
-        key sapd;
-        uses sap-topology-connection-grouping;
-      }
-    }
-
     list tenant {
       key name;
       leaf name {
@@ -372,69 +304,9 @@ module tme-demo {
         }
       }
 
-      container nfvo {
-        tailf:info "NFVO parameters for network services";
-        presence true;
-
-        list network-service {
-          key name;
-          leaf name {
-            type string;
-          }
-
-          leaf nsd {
-            type leafref {
-              path "/nfv:nfv/nfv:nsd/nfv:id";
-            }
-            mandatory true;
-          }
-
-          leaf flavour {
-            type leafref {
-              path "deref(../nsd)/../nfv:df/nfv:id";
-            }
-            mandatory true;
-          }
-
-          leaf vnfm {
-            type leafref {
-              path "/ncs:devices/ncs:device/ncs:name";
-            }
-            must "/ncs:devices/ncs:device-group[ncs:name='VNFM']" +
-                 "/ncs:device-name[.=current()]" {
-              error-message "The device must be in the VNFM device group";
-            }
-            default "esc0";
-          }
-
-          choice connections-choice {
-            mandatory true;
-            leaf use-default-topology-connections {
-              when "/tme-demo:tme-demo" +
-                   "/default-ns-topology-connections[nsd=current()/../nsd]";
-              type empty;
-            }
-            list sap-topology-connection {
-              key sapd;
-              uses sap-topology-connection-grouping;
-            }
-          }
-        }
-      }
-
       leaf touch-date {
         type string;
       }
-    }
-  }
-
-  augment "/nfv:nfv/cisco-nfvo:internal/cisco-nfvo:netconf-deployment-result/cisco-nfvo:vm-group" {
-    leaf vms-scaling {
-      type uint8;
-      config false;
-//      tailf:cdb-oper {
-//        tailf:persistent true;
-//      }
     }
   }
 

@@ -35,8 +35,6 @@
       <vlan>502</vlan>
       <ip-network>50.0.2.0/24</ip-network>
     </data-centre>
-    <nfvo>
-    </nfvo>
   </tenant>
   <tenant>
     <name>Logistics</name>

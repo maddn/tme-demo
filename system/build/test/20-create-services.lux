@@ -42,64 +42,6 @@
 
     !config
     [invoke cfg-prompt]
-    [progress <Creating NFVO service>]
-    !load merge data/vPE.xml
-    [invoke commit]
-    !exit
-    [invoke oper-prompt]
-
-    !show running-config tme-demo tenant tenant-1 nfvo
-    """?
-    tme-demo tenant tenant-1
-     nfvo network-service vPE
-      nsd                              vPE
-      flavour                          basic-assurance
-      use-default-topology-connections
-     !
-    !
-    """
-    [invoke oper-prompt]
-
-    [loop iter 1..19]
-    !show tme-demo tenant tenant-1 plan component self state ready status
-    @status reached
-    ?Commit performed
-    [progress <$iter/19 redeploys>]
-    [invoke oper-prompt]
-    [endloop]
-
-    !show nfv ns-info tenant-1-vPE modified devices
-    ?modified devices \[ esc0 tenant-1-esc0-ns-info-tenant-1-vPE-CSR1kv-bronze-router-esc0-1 \]
-    [invoke oper-prompt]
-
-    !config
-    [invoke cfg-prompt]
-    [progress <Adding vPE to L3VPN>]
-    !load merge data/vPE-site.xml
-    [invoke commit]
-    !exit
-    [invoke oper-prompt]
-
-    !show running-config tme-demo tenant tenant-1 l3vpn endpoint site7
-    """?
-    tme-demo tenant tenant-1
-     l3vpn endpoint site7
-      ce-device    ce7
-      ce-interface 0/7
-      ip-network   10.1.70.0/28
-      bandwidth    70000000
-      as-number    700
-     !
-    !
-    """
-    [invoke oper-prompt]
-
-    !show vpn l3vpn tenant-1 modified devices
-    ?modified devices \[ ce2 ce4 ce7 pe0 pe2 tenant-1-esc0-ns-info-tenant-1-vPE-CSR1kv-bronze-router-esc0-1 \]
-    [invoke oper-prompt]
-
-    !config
-    [invoke cfg-prompt]
     [progress <Creating Data Centre service>]
     !load merge data/data-centre.xml
     [invoke commit]
@@ -128,8 +70,8 @@
     [invoke oper-prompt]
 
     !show tme-demo tenant tenant-1 modified
-    ?modified devices \[ ce2 ce4 ce7 dci0 dci1 dci2 dci3 esc0 pe0 pe2 spine0 spine1 spine2 spine3 sw1 sw5 tenant-1-esc0-ns-info-tenant-1-vPE-CSR1kv-bronze-router-esc0-1 \]
-    ?modified services \[ /nfv:nfv/cisco-nfvo:internal/cisco-nfvo:netconf-deployment\[cisco-nfvo:id='esc0-ns-info-tenant-1-vPE'\] /nfv:nfv/cisco-nfvo:ns-info\[cisco-nfvo:name='tenant-1-vPE'\] /connectivity:datacenter/connectivity:connectivity\[connectivity:name='tenant-1'\] /l3vpn:vpn/l3vpn:l3vpn\[l3vpn:name='tenant-1'\] \]
+    ?modified devices \[ ce2 ce4 dci0 dci1 dci2 dci3 pe0 pe2 spine0 spine1 spine2 spine3 sw1 sw5 \]
+    ?modified services \[ /connectivity:datacenter/connectivity:connectivity\[connectivity:name='tenant-1'\] /l3vpn:vpn/l3vpn:l3vpn\[l3vpn:name='tenant-1'\] \]
     [invoke oper-prompt]
 
 
@@ -151,11 +93,4 @@
     !exit
     [invoke oper-prompt]
 
-    [loop iter 1..10]
-    !show nfv ns-info-plan | icount
-    @Found 0 instances
-    ?Commit performed
-    [progress <$iter/10 redeploys>]
-    [invoke oper-prompt]
-    [endloop]
 [endmacro]

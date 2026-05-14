@@ -6,7 +6,6 @@ import ReactResizeDetector from 'react-resize-detector';
 import Container from './Container';
 import Connection, { useConnectionsQuery } from './Connection';
 import Icon, { useIconsQuery, useZoomedIconsQuery, usePlatformsQuery, useAuthgroupsQuery } from './Icon';
-import { useVnfQueries } from './Vnf';
 import DragLayerCanvas from './DragLayerCanvas';
 import CustomDragLayer from './CustomDragLayer';
 import LoadingOverlay from '../common/LoadingOverlay';
@@ -31,7 +30,6 @@ const TopologyBody = React.memo(function TopologyBody () {
   const zoomedIcons = useZoomedIconsQuery();
   const connections = useConnectionsQuery();
   const platforms = usePlatformsQuery();
-  const vnfs = useVnfQueries();
   const authgroups = useAuthgroupsQuery();
 
   const resize = () => {
@@ -62,7 +60,7 @@ const TopologyBody = React.memo(function TopologyBody () {
               refreshMode="debounce"
               refreshRate={500}
             />
-              {icons.data && vnfs && connections.data?.map(
+              {icons.data && connections.data?.map(
                 ({ keypath, endpoint1Device, endpoint2Device }) =>
                   <Connection
                     key={`${endpoint1Device} - ${endpoint2Device}`}
@@ -71,7 +69,7 @@ const TopologyBody = React.memo(function TopologyBody () {
                     zEndDevice={endpoint2Device}
                   />
               )}
-              {vnfs && icons.data?.map(({ id, name }) =>
+              {icons.data?.map(({ id, name }) =>
                   <Icon key={name} name={name} />
               )}
               <DragLayerCanvas canvasRef={canvasRef} />
@@ -86,7 +84,7 @@ const TopologyBody = React.memo(function TopologyBody () {
         'Zoomed Icons':   fetchStatus(zoomedIcons),
         'Connections':    fetchStatus(connections),
         'Platforms':      fetchStatus(platforms),
-        'VNFs':           fetchStatus(vnfs)
+        'Authgroups':     fetchStatus(authgroups)
       }}/>
     </LayoutContextProvider>
   );

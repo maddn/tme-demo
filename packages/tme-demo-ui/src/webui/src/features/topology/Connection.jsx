@@ -16,7 +16,6 @@ import { getDraggedItem, getSelectedConnection, getEditMode,
          connectionSelected } from './topologySlice';
 
 import { useDeviceIconPosition } from './Icon';
-import { useNsInfoVmDevices } from './Vnf';
 
 import { LayoutContext } from './LayoutContext';
 
@@ -67,20 +66,6 @@ export function useConnectedDevices(name) {
 
   return useConnectionsQuery(selector).data;
 }
-
-export function useNsInfoConnectedDevices(nsInfo) {
-  const nsInfoDevices = useNsInfoVmDevices(nsInfo).data?.map(
-    ({ deviceName }) => deviceName);
-
-  const selector = useMemo(() => createSelector(
-    result => nsInfoDevices?.length > 0 && JSON.stringify(nsInfoDevices.flatMap(
-      device => getConnectedDevices(device, result.data))),
-    devices => ({ data: devices && JSON.parse(devices) })
-  ), [ nsInfo, nsInfoDevices ]);
-
-  return useConnectionsQuery(selector).data;
-}
-
 
 // === Utils ==================================================================
 

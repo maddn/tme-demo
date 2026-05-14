@@ -1,8 +1,7 @@
 import React from 'react';
 import { useMemo } from 'react';
 
-import { NETWORK_SERVICE } from 'constants/ItemTypes';
-import { CUSTOMER_ROUTER, SERVICE_CHAIN, SWITCH } from 'constants/Icons';
+import { CUSTOMER_ROUTER, SWITCH } from 'constants/Icons';
 
 import ServicePane from '../panels/ServicePane';
 import DroppableNodeList, { DROP_BEHAVIOUR_OPEN_NEW_ITEM,
@@ -25,7 +24,6 @@ const selection = {
 
 export const path = '/tme-demo:tme-demo/tenant';
 const l3vpn = 'l3vpn/endpoint';
-const nfvo = 'nfvo/network-service';
 const datacentre='data-centre/endpoint';
 
 export function useQuery(selectFromResult) {
@@ -46,7 +44,6 @@ export function useFetchStatus() {
   return useMemoizeWhenFetched({
     'Tenants': useQueryState(path),
     'L3VPN Endpoints': useQueryState(`${path}/${l3vpn}`),
-    'Network Services': useQueryState(`${path}/${nfvo}`),
     'DC Endpoints': useQueryState(`${path}/${datacentre}`)
   });
 }
@@ -58,8 +55,6 @@ export function Component({ name }) {
   const { keypath } = data;
 
   const l3vpnSelector = useMemo(() =>
-    createItemsSelector('parentName', name), [ name ]);
-  const nfvoSelector = useMemo(() =>
     createItemsSelector('parentName', name), [ name ]);
   const datacentreSelector = useMemo(() =>
     createItemsSelector('parentName', name), [ name ]);
@@ -88,21 +83,6 @@ export function Component({ name }) {
         newItemDefaults={name => (
           [{ path: 'ce-device', value: name }]
         )}
-      />
-      <DroppableNodeList
-        allowDrop={false}
-        newItemDragType={NETWORK_SERVICE}
-        newItemDragIcon={SERVICE_CHAIN}
-        label="Network Service"
-        keypath={`${keypath}/${nfvo}`}
-        defaultsPath="/webui:webui/data-stores/tme-demo-ui:static-map/icon"
-        baseSelect={[ 'name', '../../name' ]}
-        labelSelect={{
-          'nsd':      'NSD',
-          'flavour':  'Flavour',
-          'vnfm':     'VNFM'
-        }}
-        selector={nfvoSelector}
       />
       <DroppableNodeList
         allowDrop={true}

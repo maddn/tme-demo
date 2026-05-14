@@ -25,9 +25,5 @@
     <device-name>pe2</device-name>
     <device-name>pe3</device-name>
   </device-group>
-  <device-group>
-    <name>VNFM</name>
-    <device-name>esc0</device-name>
-  </device-group>
   </devices>
 </config>

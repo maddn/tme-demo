@@ -71,15 +71,6 @@ module tme-demo-ui {
               type string;
             }
           }
-
-          case ns-info {
-            leaf ns-info {
-        //      tailf:non-strict-leafref {
-        //        path "/nfvo-rel2:nfvo/nfvo-rel2:ns-info/nfvo-rel2-esc:esc/nfvo-rel2-esc:ns-info/nfvo-rel2-esc:id";
-        //      }
-              type string;
-            }
-          }
         }
 
         leaf type {
@@ -168,7 +159,5 @@ module tme-demo-ui {
     }
   }
 }
-
-
 
 

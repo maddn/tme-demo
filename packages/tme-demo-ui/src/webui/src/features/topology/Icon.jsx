@@ -10,17 +10,13 @@ import Tippy from '@tippyjs/react';
 import { LayoutContext} from './LayoutContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { ICON, INTERFACE, ENDPOINT } from '../../constants/ItemTypes';
-import { CIRCLE_ICON_RATIO,
-         ICON_VNF_SPACING, ICON_VM_SPACING } from 'constants/Layout';
+import { CIRCLE_ICON_RATIO, ICON_OUTLINE_RATIO } from 'constants/Layout';
 import { BTN_ADD } from '../../constants/Icons';
 import { HIGHLIGHT, HOVER } from '../../constants/Colours';
 
 import Interface from './Interface';
 import IconHighlight from './icons/IconHighlight';
 import IconSvg from './icons/IconSvg';
-import VnfVmIcon from './Vnf';
-import { useNsInfoVnfs, useVmDevice } from './Vnf';
-import { getVnfVmIndex } from './Vnf';
 
 import { getExpandedIcons, getSelectedIcon, getEditMode, getHighlightedIcons,
          itemDragged, iconHovered, connectionSelected, iconSelected,
@@ -38,9 +34,12 @@ const roundPc = (n) =>
   +Number.parseFloat(n).toFixed(2);
 
 function calculateIconPosition(
-  icon, container, hidden, dimensions, expanded, iconHeightPc,
-  vnfCount, vmCount, vnfIndex, vmIndex
+  icon, container, hidden, dimensions, expanded
 ) {
+  if (!icon || !container) {
+    return {};
+  }
+
   const { coordX, coordY } = icon;
   const { pc: { left, top, width, height }, connectionColour } = container;
 
@@ -54,26 +53,16 @@ function calculateIconPosition(
     connectionColour, hidden, expanded
   });
 
-  if (vnfCount) {
-    const vnfOffset = (
-      (vnfCount + 1) * ICON_VNF_SPACING +
-      (Math.min(vmCount - vnfCount, 0)) * ICON_VM_SPACING
-    ) * iconHeightPc / 2;
-
-    const vnfPcX = pcX;
-    const vnfPcY = (expanded)
-      ? roundPc(pcY + ((vnfIndex + 1) * ICON_VNF_SPACING +
-        vmIndex * ICON_VM_SPACING) * iconHeightPc  - vnfOffset)
-      : pcY;
-    return position(vnfPcX, vnfPcY);
-  }
-
   return position(pcX, pcY);
 }
 
 function getIconDetails(
   icon, zoomedContainer, zoomedIcons, visibleUnderlays, containers
 ) {
+  if (!icon) {
+    return [ undefined, undefined, false ];
+  }
+
   const zoomedIcon = zoomedIcons?.find(({ parentName, name }) =>
     parentName === icon.name && name === zoomedContainer);
   const container = zoomedIcon?.name || icon?.container;
@@ -92,7 +81,6 @@ export function useIconsQuery(selectFromResult) {
     selection: [
       'name',
       'device',
-      'ns-info',
       'type',
       'container',
       'underlay',
@@ -109,10 +97,6 @@ export function useIcon(name) {
 
 export function useIconByDevice(device) {
   return useIconsQuery(selectItem('device', device)).data;
-}
-
-export function useIconByNsInfo(nsInfo) {
-  return useIconsQuery(selectItem('nsInfo', nsInfo)).data;
 }
 
 export function useZoomedIconsQuery(selectFromResult) {
@@ -181,8 +165,8 @@ export function useIsExpanded(name) {
   return useSelector((state) => getExpandedIcons(state)?.includes(name));
 }
 
-export function useIconPosition(name, vnfCount, vmCount, vnfIndex, vmIndex) {
-  const { containers, dimensions, iconHeightPc } = useContext(LayoutContext);
+export function useIconPosition(name) {
+  const { containers, dimensions } = useContext(LayoutContext);
 
   return calculateIconPosition(
     ...getIconDetails(
@@ -191,29 +175,20 @@ export function useIconPosition(name, vnfCount, vmCount, vnfIndex, vmIndex) {
       useZoomedIconsQuery().data,
       useSelector((state) => getVisibleUnderlays(state)),
       containers),
-    dimensions, useIsExpanded(name), iconHeightPc,
-    vnfCount, vmCount, vnfIndex, vmIndex);
+    dimensions, useIsExpanded(name));
 }
 
 
 export function useDeviceIconPosition(device) {
-  const vmDevice = useVmDevice(device).data;
-  const deploymentId = vmDevice?.parentParentId;
   const deviceIcon = useIconByDevice(device);
-  const nsInfoIcon = useIconByNsInfo(deploymentId?.replace(/.*ns-info-/, ''));
-  const icon = vmDevice?.name ? nsInfoIcon : deviceIcon;
+  const position = useIconPosition(deviceIcon?.name);
 
-  if (!icon) {
+  if (!deviceIcon) {
     console.error(`Missing icon for device ${device}`);
     return {};
   }
 
-  const vnfs = useNsInfoVnfs(icon?.nsInfo);
-  const [ vmCount, vnfIndex, vmIndex ] = getVnfVmIndex(vnfs, device);
-
-  return {
-    ...useIconPosition(icon?.name, vnfs.length, vmCount, vnfIndex, vmIndex)
-  };
+  return { ...position };
 }
 
 export function useIconPositionCalculator() {
@@ -257,11 +232,8 @@ function Icon({ name }) {
   const zoomedContainer = useSelector((state) => getZoomedContainer(state));
   const container = zoomedContainer || icon.container;
 
-  const { keypath, device, type, nsInfo } = icon;
+  const { keypath, device, type } = icon;
   const { x, y, pcX, pcY, hidden, expanded } = useIconPosition(name);
-
-  const vnfs = useNsInfoVnfs(nsInfo);
-  const vmCount = vnfs?.reduce( (acc, vnf) => acc += vnf.vmDevices.length, 0);
 
   const connectedDevices = useConnectedDevices(device);
 
@@ -283,7 +255,7 @@ function Icon({ name }) {
       };
       img.onload = () => { item.icon.imgReady = true; };
       requestAnimationFrame(
-        () => { dispatch(itemDragged({ device, nsInfo, container })); });
+        () => { dispatch(itemDragged({ device, container })); });
       return item;
     },
     end: (item, monitor) => {
@@ -346,29 +318,20 @@ function Icon({ name }) {
     mouseDownPos.y = event.clientY;
   };
 
-  const tooltipContent = (status, vnfIndex) =>
-    device ?
-      <table className="tooltip">
-        <tbody>
-          <tr><td>Device:</td><td>{device}</td></tr>
-          <tr><td>Status:</td><td>{status}</td></tr>
-          {status === 'reachable' &&
-            <Fragment>
-              <tr><td>Platform:</td><td>{platform.name}</td></tr>
-              <tr><td>Version:</td><td>{platform.version}</td></tr>
-              <tr><td>Model:</td><td>{platform.model}</td></tr>
-            </Fragment>
-          }
-        </tbody>
-      </table>
-    : nsInfo ?
-        <table className="tooltip">
-          <tbody>
-            <tr><td>NS Info:</td><td>{nsInfo}</td></tr>
-            <tr><td>VNF Count:</td><td>{vnfs.length}</td></tr>
-          </tbody>
-        </table>
-    : name;
+  const tooltipContent = (status) =>
+    <table className="tooltip">
+      <tbody>
+        <tr><td>Device:</td><td>{device}</td></tr>
+        <tr><td>Status:</td><td>{status}</td></tr>
+        {status === 'reachable' &&
+          <Fragment>
+            <tr><td>Platform:</td><td>{platform.name}</td></tr>
+            <tr><td>Version:</td><td>{platform.version}</td></tr>
+            <tr><td>Model:</td><td>{platform.model}</td></tr>
+          </Fragment>
+        }
+      </tbody>
+    </table>;
 
   const { canDrop } = collectedDropProps;
   const { isDragging } = collectedDragProps;
@@ -382,21 +345,14 @@ function Icon({ name }) {
   });
 
   const getStatus = () => {
-    return (device
-      ? platform ? 'reachable' : 'unreachable'
-      : nsInfo ? vnfs.length > 0 ? 'ready' : 'init' : undefined
-    );
+    return platform ? 'reachable' : 'unreachable';
   };
 
   let status = getStatus();
-  const top = useIconPosition(name, vnfs.length, vmCount, 0, 0);
-  const outlineSize = expanded ? Math.round(size * ICON_VNF_SPACING) : size;
+  const top = { pcX, pcY };
+  const outlineSize = expanded ? Math.round(size * ICON_OUTLINE_RATIO) : size;
   const outlineRadius = outlineSize / 2;
-
-  const height = (expanded && vnfs.length > 0)
-    ? vnfs.length * outlineSize + vnfs.reduce((accumulator, vnf) =>
-        accumulator += (vnf.vmDevices.length - 1) * ICON_VM_SPACING, 0) * size
-    : outlineSize;
+  const height = outlineSize;
 
   // The drag preview is not captured correctly on Safari,
   // so generate PNG image and use that
@@ -424,17 +380,6 @@ function Icon({ name }) {
         }}
       >
       </div>
-      {vnfs && vnfs.map(({ vmDevices }) =>
-        vmDevices.map((vm) =>
-          <VnfVmIcon
-            key={vm.name}
-            iconName={icon.name}
-            nsInfo={icon.nsInfo}
-            vmDeviceName={vm.name}
-            onClick={handleOnClick}
-          />
-        )
-      )}
       <div
         className={classNames('icon__container', {
           'icon__container--hidden': !canDrop
@@ -447,10 +392,7 @@ function Icon({ name }) {
         className={classNames('icon__container', {
           'icon__container--expanded': expanded,
           'icon__container--hidden': hidden || editMode ||
-            expanded && vnfs.length > 0 ||
-            !highlightedDevices || !(highlightedDevices.includes(device) ||
-            (vnfs && vnfs.some(({ vmDevices }) => vmDevices.some(
-              vm => highlightedDevices.includes(vm.name)))))
+            !highlightedDevices || !highlightedDevices.includes(device)
         })}
         style={positionStyle(pcX, pcY, size*2)}
       >
@@ -488,8 +430,7 @@ function Icon({ name }) {
                 onMouseDown={handleMouseDown}
                 className={classNames('icon__svg-wrapper',
                   'icon__svg-wrapper-absolute', {
-                  'icon__svg-wrapper--hidden': hidden ||
-                    expanded && vnfs.length > 0
+                  'icon__svg-wrapper--hidden': hidden
                 })}
                 style={svgStyle(size)}
               >
