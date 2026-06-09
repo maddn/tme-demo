@@ -5,9 +5,15 @@ import { subscribe, unsubscribe } from './comet';
 
 export const pathKeyRegex = /{[^}]*}/g;
 export const xpathPredicateRegex = /\[[^\]]*\]/g;
+export const namespacePrefixRegex = /\/[^/:{}[\]]+:/g;
 
+export const removePrefixes = path => path.replace(namespacePrefixRegex, '/');
 export const removeKeys = path => path.replace(pathKeyRegex, '');
 export const removePredicates = xpath => xpath.replace(xpathPredicateRegex, '');
+export const cachePathFromXpath = xpath =>
+  removePrefixes(removePredicates(xpath));
+export const cachePathFromKeypath = keypath =>
+  removePrefixes(removeKeys(keypath));
 
 export const camelCase = value => (value.endsWith('/id') ? value.replace(
   /(\.\.\/)/g, 'parent-') : value).replace(
@@ -36,7 +42,8 @@ export const swapLabels = (data, labels) => {
 export const convertKeys = (data, replaceName) =>
   Object.fromEntries(Object.entries(data).map(
     ([ key, value ], index) => [
-      replaceName && key.endsWith('../name') ? 'parentName'
+      replaceName && key.endsWith('../../../name') ? 'ancestorName'
+          : replaceName && key.endsWith('../name') ? 'parentName'
           : replaceName && index == 0 ? 'name' : camelCase(key), value ]));
 
 
@@ -122,17 +129,18 @@ const transformQueryResponse = (selection, response, keys, isLeafList) =>
   );
 
 export function updateQueryData(keypath, name, args, queryKey, dispatch) {
+  const queryPath = cachePathFromKeypath(keypath);
   return jsonRpcApi.util.updateQueryData(
-    'query', { xpathExpr: removeKeys(keypath), queryKey }, draft => {
+    'query', { xpathExpr: queryPath, queryKey }, draft => {
       const index = draft.findIndex(item => item.keypath === keypath);
       if (typeof args === 'object') {
         index === -1 && draft.push({ keypath, name, ...args });
       } else if (typeof args === 'string') {
         if (index == -1) {
           if (dispatch) {
-            console.log(`Invalidating ${removeKeys(keypath)}. New item ${keypath}`);
+            console.log(`Invalidating ${queryPath}. New item ${keypath}`);
             dispatch(jsonRpcApi.util.invalidateTags([
-              { type: 'data', id: removeKeys(keypath) }
+              { type: 'data', id: queryPath }
             ]));
           }
         } else {
@@ -159,7 +167,7 @@ export const queryApi = jsonRpcApi.injectEndpoints({
         }
       }),
       providesTags: (_, __, { xpathExpr, tag }) => (
-        [ { type: 'data', id: removePredicates(xpathExpr) } ]
+        [ { type: 'data', id: cachePathFromXpath(xpathExpr) } ]
       ),
       transformResponse: (response, _, { selection, keys, isLeafList }) => (
         transformQueryResponse(selection, response, keys, isLeafList)
@@ -168,7 +176,7 @@ export const queryApi = jsonRpcApi.injectEndpoints({
         typeof queryArgs === 'string'
           ? `query(${queryArgs})`
           : `${queryArgs.queryKey || 'query'}(${
-            removePredicates(queryArgs.xpathExpr)})`
+            cachePathFromXpath(queryArgs.xpathExpr)})`
       ),
       async onCacheEntryAdded(
         args,

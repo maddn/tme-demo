@@ -23,7 +23,7 @@ const topologyPersistConfig = {
 const menuPersistConfig = {
   key: 'menu',
   storage: storage,
-  whitelist: [ 'openService' ]
+  whitelist: [ 'openTopology', 'openService' ]
 };
 
 export const store = configureStore({
@@ -39,5 +39,5 @@ export const store = configureStore({
         FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
     },
     immutableCheck: false
-  }).concat(jsonRpcApi.middleware),
+  }).concat(jsonRpcApi.middleware)
 });

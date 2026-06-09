@@ -9,10 +9,10 @@ import { getOpenTerminals, getConsoleViewerHidden, hideConsoleViewer,
          terminalToggled } from 'features/topology/topologySlice';
 
 import InlineBtn from 'features/common/buttons/InlineBtn';
-import DeviceTerminal from './DeviceTerminal';
 
+const DefaultDeviceTerminal = () => null;
 
-function TerminalViewer() {
+function TerminalViewer({ DeviceTerminal = DefaultDeviceTerminal }) {
   console.debug('TerminalViewer Render');
 
   const dispatch = useDispatch();

@@ -1,114 +1,95 @@
 import React from 'react';
-import { Fragment, memo, useCallback,
-         useContext, useEffect } from 'react';
-import { useDrop, useDrag } from 'react-dnd';
+import { Fragment, useCallback,
+         useContext, useEffect, useMemo} from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { useDrop, useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import classNames from 'classnames';
 import Tippy from '@tippyjs/react';
 
-import { LayoutContext} from './LayoutContext';
-import { useSelector, useDispatch } from 'react-redux';
-import { ICON, INTERFACE, ENDPOINT } from '../../constants/ItemTypes';
+import { ICON, INTERFACE, DEVICE } from 'constants/ItemTypes';
 import { CIRCLE_ICON_RATIO, ICON_OUTLINE_RATIO } from 'constants/Layout';
-import { BTN_ADD } from '../../constants/Icons';
-import { HIGHLIGHT, HOVER } from '../../constants/Colours';
+import { BTN_ADD } from 'constants/Icons';
+import { HIGHLIGHT, HOVER } from 'constants/Colours';
 
 import Interface from './Interface';
 import IconHighlight from './icons/IconHighlight';
 import IconSvg from './icons/IconSvg';
 
-import { getExpandedIcons, getSelectedIcon, getEditMode, getHighlightedIcons,
+import { getSelectedIcon, getEditMode, getHighlightedIcons, getExpandedIcons,
          itemDragged, iconHovered, connectionSelected, iconSelected,
-         iconExpandToggled, getVisibleUnderlays, getZoomedContainer } from './topologySlice';
-import { useConnectedDevices, createConnection } from './Connection';
+         getZoomedContainer, getVisibleUnderlays,
+         iconExpandToggled } from './topologySlice';
+import { getOpenTopology,
+         getOpenTopologyName } from 'features/menu/menuSlice';
+import { useConnectedDevices } from './Connection';
 
+import { LayoutContext} from './LayoutContext';
 import { isSafari, connectPngDragPreview } from './DragLayerCanvas';
 
-import { selectItem, useQueryQuery } from '/api/query';
+import { camelCase, selectItem, selectItemWithArray,
+         createItemsSelector, useQueryQuery } from '/api/query';
 
-import { useSetValueMutation, useCreateMutation } from '/api/data';
-
-
-const roundPc = (n) =>
-  +Number.parseFloat(n).toFixed(2);
-
-function calculateIconPosition(
-  icon, container, hidden, dimensions, expanded
-) {
-  if (!icon || !container) {
-    return {};
-  }
-
-  const { coordX, coordY } = icon;
-  const { pc: { left, top, width, height }, connectionColour } = container;
-
-  const pcX = roundPc(left + coordX * width);
-  const pcY = roundPc(top + coordY * height);
-
-  const position = (pcX, pcY) => ({
-    pcX, pcY,
-    x: Math.round(pcX * dimensions.width / 100),
-    y: Math.round(pcY * dimensions.height / 100),
-    connectionColour, hidden, expanded
-  });
-
-  return position(pcX, pcY);
-}
-
-function getIconDetails(
-  icon, zoomedContainer, zoomedIcons, visibleUnderlays, containers
-) {
-  if (!icon) {
-    return [ undefined, undefined, false ];
-  }
-
-  const zoomedIcon = zoomedIcons?.find(({ parentName, name }) =>
-    parentName === icon.name && name === zoomedContainer);
-  const container = zoomedIcon?.name || icon?.container;
-  const hidden = zoomedContainer && zoomedContainer !== container ||
-    icon.underlay === 'true' && !visibleUnderlays.includes(container);
-
-  return [ zoomedIcon || icon, containers[container], hidden ];
-}
+import { useSetValueMutation,
+         useCreateMutation, useDeletePathMutation } from '/api/data';
+import { useQuerySelection } from './QuerySelectionContext';
 
 
 // === Queries ================================================================
 
-export function useIconsQuery(selectFromResult) {
+function __useDevicesQuery(selectFromResult) {
+  const { devices: devicesQuery } = useQuerySelection();
   return useQueryQuery({
-    xpathExpr: '/webui:webui/data-stores/tme-demo-ui:static-map/icon',
+    xpathExpr: '/topologies/topology/devices/device',
     selection: [
-      'name',
-      'device',
-      'type',
+      'device-name',
+      '../../name',
       'container',
-      'underlay',
-      'coord/x',
-      'coord/y' ],
-    subscribe: { cdbOper: false, skipLocal: false }
+      'icon/type',
+      'icon/underlay',
+      'icon/coord/x',
+      'icon/coord/y',
+      ...devicesQuery.selection ],
+    subscribe: devicesQuery.subscribe
     }, { selectFromResult }
   );
 }
 
-export function useIcon(name) {
-  return useIconsQuery(selectItem('name', name)).data;
+export function useDevicesQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  return __useDevicesQuery(useMemo(() =>
+    createItemsSelector('parentName', topology), [ topology ]));
 }
 
-export function useIconByDevice(device) {
-  return useIconsQuery(selectItem('device', device)).data;
+export function useDevice(name) {
+  const topology = useSelector(getOpenTopologyName);
+  const device = __useDevicesQuery(selectItemWithArray([
+    [ 'parentName', topology ], [ 'name', name ]
+  ])).data;
+  if (name && !device) {
+    console.error(`Device ${name} doesn't exist`);
+  }
+  return device;
 }
 
-export function useZoomedIconsQuery(selectFromResult) {
+function __useZoomedIconsQuery(selectFromResult) {
   return useQueryQuery({
-    xpathExpr: '/webui:webui/data-stores/tme-demo-ui:static-map/icon/zoomed',
+    xpathExpr: '/topologies/topology/devices/device/icon/zoomed',
     selection: [
       'container',
-      '../name',
+      '../../../../name',
+      '../../device-name',
       'coord/x',
       'coord/y' ]
     }, { selectFromResult }
   );
+}
+
+export function useZoomedIconsQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  return __useZoomedIconsQuery(useMemo(() =>
+    createItemsSelector('ancestorName', topology), [ topology ]));
 }
 
 export function usePlatformsQuery(itemSelector) {
@@ -144,10 +125,10 @@ export function useAuthgroup(groupName) {
 
 // === Util functions =========================================================
 
-export function positionStyle(pcX, pcY, size) {
+function positionStyle(position, size) {
   return {
-    left: `${pcX}%`,
-    top: `${pcY}%`,
+    left: `${position.pcX}%`,
+    top: `${position.pcY}%`,
     transform: `translate(-50%, ${-size/2}px)`,
   };
 }
@@ -159,6 +140,69 @@ export function svgStyle(size) {
   };
 }
 
+const roundPc = (n) =>
+  +Number.parseFloat(n).toFixed(2);
+
+function calculateIconPosition(device, container, hidden, dimensions) {
+  if (!device || !container) {
+    return {};
+  }
+
+  const coordX = device.coordX ?? device.iconCoordX;
+  const coordY = device.coordY ?? device.iconCoordY;
+  const { pc: { left, top, width, height }, connectionColour } = container;
+
+  const pcX = roundPc(left + coordX * width);
+  const pcY = roundPc(top + coordY * height);
+
+  const position = (pcX, pcY) => ({
+    pcX, pcY,
+    x: Math.round(pcX * dimensions.width / 100),
+    y: Math.round(pcY * dimensions.height / 100),
+    connectionColour, hidden
+  });
+
+  return position(pcX, pcY);
+}
+
+function isHidden(device, container, zoomedContainer, visibleUnderlays) {
+  return zoomedContainer && zoomedContainer !== container ||
+    device.iconUnderlay === 'true' && !visibleUnderlays.includes(container);
+}
+
+function formatInfoLabel(value) {
+  return value.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+}
+
+function DeviceTooltip({ device, platform, status, selection }) {
+  const extraInfo = selection.map(leaf => {
+    const prop = camelCase(leaf);
+    return {
+      label: formatInfoLabel(prop),
+      value: device[prop]
+    };
+  }).filter(({ value }) => value);
+
+  return (
+    <table className="tooltip">
+      <tbody>
+        <tr><td>Device:</td><td>{device.name}</td></tr>
+        <tr><td>Status:</td><td>{status}</td></tr>
+        {platform &&
+          <Fragment>
+            <tr><td>Platform:</td><td>{platform.name}</td></tr>
+            <tr><td>Version:</td><td>{platform.version}</td></tr>
+            <tr><td>Model:</td><td>{platform.model}</td></tr>
+          </Fragment>
+        }
+        {extraInfo.map(({ label, value }) =>
+          <tr key={label}><td>{label}:</td><td>{value}</td></tr>
+        )}
+      </tbody>
+    </table>
+  );
+}
+
 // === Hooks ==================================================================
 
 export function useIsExpanded(name) {
@@ -166,29 +210,10 @@ export function useIsExpanded(name) {
 }
 
 export function useIconPosition(name) {
-  const { containers, dimensions } = useContext(LayoutContext);
+  const device = useDevice(name);
+  const iconPosition = useIconPositionCalculator();
 
-  return calculateIconPosition(
-    ...getIconDetails(
-      useIcon(name),
-      useSelector(state => getZoomedContainer(state)),
-      useZoomedIconsQuery().data,
-      useSelector((state) => getVisibleUnderlays(state)),
-      containers),
-    dimensions, useIsExpanded(name));
-}
-
-
-export function useDeviceIconPosition(device) {
-  const deviceIcon = useIconByDevice(device);
-  const position = useIconPosition(deviceIcon?.name);
-
-  if (!deviceIcon) {
-    console.error(`Missing icon for device ${device}`);
-    return {};
-  }
-
-  return { ...position };
+  return iconPosition(device);
 }
 
 export function useIconPositionCalculator() {
@@ -198,48 +223,60 @@ export function useIconPositionCalculator() {
   const zoomedContainer = useSelector((state) => getZoomedContainer(state));
   const zoomedIcons = useZoomedIconsQuery().data;
 
-  return useCallback(icon => {
-    if (!icon) {
+  return useCallback(device => {
+    if (!device || !containers) {
       return {};
     }
 
-    return calculateIconPosition(...getIconDetails(
-        icon, zoomedContainer, zoomedIcons, visibleUnderlays, containers),
+    const zoomedIcon = zoomedIcons?.find(({ deviceName, name }) =>
+      deviceName === device.name && name === zoomedContainer);
+    const container = zoomedIcon?.name || device.container;
+
+    return calculateIconPosition(
+      zoomedIcon || device,
+      containers[container],
+      isHidden(device, container, zoomedContainer, visibleUnderlays),
       dimensions);
 
-  }, [ containers, visibleUnderlays, zoomedContainer, zoomedIcons ]);
+  }, [ containers, dimensions, visibleUnderlays, zoomedContainer, zoomedIcons ]);
 }
 
 // === Component ==============================================================
 
-function Icon({ name }) {
+function Icon({ name, getDeviceStatus }) {
   console.debug('Icon Render');
   const mouseDownPos = {};
 
+  const { devices: devicesQuery } = useQuerySelection();
   const dispatch = useDispatch();
   const [ setValue ] = useSetValueMutation();
   const [ create ] = useCreateMutation();
+  const [ deletePath ] = useDeletePathMutation();
 
   const { iconSize: size, pxToPc } = useContext(LayoutContext);
 
-  const icon = useIcon(name);
   const platform = usePlatform(name);
+  const device = useDevice(name);
 
   const selected = useSelector((state) => getSelectedIcon(state) === name);
-  const highlightedDevices = useSelector((state) => getHighlightedIcons(state));
+  const highlighted = useSelector(
+    (state) => getHighlightedIcons(state)?.includes(name));
   const editMode = useSelector((state) => getEditMode(state));
+  const openTopologyKeypath = useSelector((state) => getOpenTopology(state));
 
+  const openTopology = useSelector(getOpenTopologyName);
   const zoomedContainer = useSelector((state) => getZoomedContainer(state));
-  const container = zoomedContainer || icon.container;
+  const container = zoomedContainer || device.container;
 
-  const { keypath, device, type } = icon;
-  const { x, y, pcX, pcY, hidden, expanded } = useIconPosition(name);
+  const { keypath, iconType } = device;
+  const { x, y, pcX, pcY, hidden } = useIconPosition(name);
+  const expanded = useIsExpanded(name);
 
-  const connectedDevices = useConnectedDevices(device);
+  const connectedDevices = useConnectedDevices(name);
 
-  const [ , endpointDrag, endpointDragPreview] = useDrag(() => ({
-    type: ENDPOINT,
-    item: { name: device, type },
+  const [, deviceDrag, deviceDragPreview] = useDrag(() => ({
+    type: DEVICE,
+    item: { name, type: iconType },
     canDrag: !editMode
   }));
 
@@ -248,14 +285,14 @@ function Icon({ name }) {
     item: () => {
       const img = new Image();
       img.src = `data:image/svg+xml,${encodeURIComponent(renderToStaticMarkup(
-            <IconSvg type={type} status={status} size={size} />
+            <IconSvg type={iconType} status={status} size={size} />
       ))}`;
       const item = {
         icon: { name, img, imgReady: false, container}, x, y,  mouseDownPos
       };
       img.onload = () => { item.icon.imgReady = true; };
       requestAnimationFrame(
-        () => { dispatch(itemDragged({ device, container })); });
+        () => { dispatch(itemDragged({ icon: name, container })); });
       return item;
     },
     end: (item, monitor) => {
@@ -270,24 +307,29 @@ function Icon({ name }) {
   const [ collectedDropProps, drop ] = useDrop(() => ({
     accept: INTERFACE,
     drop: (item) => {
-      const { keypath, aEndDevice, zEndDevice, fromDevice } = item.interface;
-      const endpoint1Device = aEndDevice ? name : fromDevice;
-      const endpoint2Device = (zEndDevice || !aEndDevice) ? name : fromDevice;
+      const { aEndDevice: aEnd, zEndDevice: zEnd,
+              keypath, fromDevice } = item.interface;
+      const aEndDevice = aEnd ? name : fromDevice;
+      const zEndDevice = (zEnd || !aEnd) ? name : fromDevice;
 
       if (keypath) {
-        setValue({ keypath, leaf: 'endpoint-1/device', value: endpoint1Device });
-        setValue({ keypath, leaf: 'endpoint-2/device', value: endpoint2Device });
-      } else {
-        createConnection(endpoint1Device, endpoint2Device, create, setValue);
+        deletePath({ keypath });
       }
 
-      dispatch(connectionSelected(endpoint1Device, endpoint2Device));
+      create({
+        keypath: `${openTopologyKeypath}/links/link`,
+        name: `${aEndDevice} ${zEndDevice}`,
+        aEndDevice, zEndDevice,
+        parentName: openTopology,
+      });
+      dispatch(connectionSelected({ aEndDevice, zEndDevice }));
     },
     canDrop: (item, monitor) => {
-      if (!monitor.isOver()) {
+      const hoveredInterface = monitor.isOver() && item;
+      if (!hoveredInterface) {
         return false;
       }
-      const { fromDevice } = item.interface;
+      const { fromDevice } = hoveredInterface.interface;
       if (name === fromDevice ) {
         return false;
       }
@@ -307,10 +349,11 @@ function Icon({ name }) {
   };
 
   const moveIcon = (x, y) => {
-    const path = zoomedContainer ? `${keypath}/zoomed{${container}}` : keypath;
+    const path = zoomedContainer ? `${keypath}/icon/zoomed{${container}}` : keypath;
+    const coordNode = zoomedContainer ? 'coord/' : 'icon/coord/';
     const coordValue = pxToPc({ x, y }, container);
-    setValue({ keypath: path, leaf: 'coord/x', value: coordValue.x });
-    setValue({ keypath: path, leaf: 'coord/y', value: coordValue.y});
+    setValue({ keypath: path, leaf: `${coordNode}x`, value: coordValue.x });
+    setValue({ keypath: path, leaf: `${coordNode}y`, value: coordValue.y});
   };
 
   const handleMouseDown = event => {
@@ -318,23 +361,7 @@ function Icon({ name }) {
     mouseDownPos.y = event.clientY;
   };
 
-  const tooltipContent = (status) =>
-    <table className="tooltip">
-      <tbody>
-        <tr><td>Device:</td><td>{device}</td></tr>
-        <tr><td>Status:</td><td>{status}</td></tr>
-        {status === 'reachable' &&
-          <Fragment>
-            <tr><td>Platform:</td><td>{platform.name}</td></tr>
-            <tr><td>Version:</td><td>{platform.version}</td></tr>
-            <tr><td>Model:</td><td>{platform.model}</td></tr>
-          </Fragment>
-        }
-      </tbody>
-    </table>;
-
   const { canDrop } = collectedDropProps;
-  const { isDragging } = collectedDragProps;
 
   useEffect(() => {
     dispatch(iconHovered(canDrop && name));
@@ -344,21 +371,23 @@ function Icon({ name }) {
     iconDragPreview(getEmptyImage(), {});
   });
 
-  const getStatus = () => {
-    return platform ? 'reachable' : 'unreachable';
-  };
+  const { isDragging } = collectedDragProps;
+
+  const getStatus = () => getDeviceStatus({
+    device,
+    platform
+  });
 
   let status = getStatus();
-  const top = { pcX, pcY };
+  const position = { x, y, pcX, pcY };
   const outlineSize = expanded ? Math.round(size * ICON_OUTLINE_RATIO) : size;
-  const outlineRadius = outlineSize / 2;
-  const height = outlineSize;
+  const highlightSize = size * 2;
 
   // The drag preview is not captured correctly on Safari,
   // so generate PNG image and use that
   isSafari && connectPngDragPreview(renderToStaticMarkup(
-    <IconSvg type={type} status={status} size={size} />),
-    size, endpointDragPreview, false
+    <IconSvg type={iconType} status={status} size={size} />),
+    size, deviceDragPreview, false
   );
 
   return (
@@ -371,12 +400,9 @@ function Icon({ name }) {
           'icon__container--hidden': hidden
         })}
         style={{
-          left: `${top.pcX}%`,
-          top: `${top.pcY}%`,
-          transform: `translate(${-outlineSize/2}px, ${-outlineSize/2}px)`,
-          borderRadius: `${outlineRadius}px`,
-          height: `${height}px`,
-          width: `${outlineSize}px`,
+          ...positionStyle(position, outlineSize),
+          ...svgStyle(outlineSize),
+          borderRadius: `${outlineSize / 2}px`,
         }}
       >
       </div>
@@ -384,21 +410,20 @@ function Icon({ name }) {
         className={classNames('icon__container', {
           'icon__container--hidden': !canDrop
         })}
-        style={positionStyle(pcX, pcY, size*2)}
+        style={positionStyle(position, highlightSize)}
       >
-        <IconHighlight size={size*2} colour={HOVER}/>
+        <IconHighlight size={highlightSize} colour={HOVER}/>
       </div>
       <div
         className={classNames('icon__container', {
           'icon__container--expanded': expanded,
-          'icon__container--hidden': hidden || editMode ||
-            !highlightedDevices || !highlightedDevices.includes(device)
+          'icon__container--hidden': hidden || editMode || !highlighted
         })}
-        style={positionStyle(pcX, pcY, size*2)}
+        style={positionStyle(position, highlightSize)}
       >
-        <IconHighlight size={size*2} colour={HIGHLIGHT}/>
+        <IconHighlight size={highlightSize} colour={HIGHLIGHT}/>
       </div>
-      {endpointDragPreview(
+      {deviceDragPreview(
         <div
           id={`${name}-icon`}
           className={classNames('icon__container', {
@@ -406,12 +431,12 @@ function Icon({ name }) {
             'icon__container--dragging': isDragging,
             'icon__container--hidden': hidden
           })}
-          style={positionStyle(pcX, pcY, size)}
+          style={positionStyle(position, size)}
         >
           <div
             className="icon__svg-wrapper icon__svg-wrapper--hidden"
             style={{
-              height: `${(height + size) / 2}px`,
+              height: `${(size + outlineSize) / 2}px`,
               width: `${size}px`
             }}
           />
@@ -421,10 +446,15 @@ function Icon({ name }) {
           <Tippy
             placement="left"
             delay="250"
-            content={tooltipContent(status)}
+            content={<DeviceTooltip
+              device={device}
+              platform={platform}
+              status={status}
+              selection={devicesQuery.selection}
+            />}
             disabled={editMode}
           >
-            {endpointDrag(drop(iconDrag(
+            {deviceDrag(drop(iconDrag(
               <div
                 onClick={handleOnClick}
                 onMouseDown={handleMouseDown}
@@ -433,11 +463,16 @@ function Icon({ name }) {
                   'icon__svg-wrapper--hidden': hidden
                 })}
                 style={svgStyle(size)}
+                onDragEnter={(event) => {
+                  event.stopPropagation();
+                }}
+                onDragLeave={(event) => {
+                  event.stopPropagation();
+                }}
               >
-                <IconSvg type={type} status={status} size={size} />
+                <IconSvg type={iconType} status={status} size={size} />
                 <Interface
-                  fromIcon={name}
-                  fromDevice={device}
+                  fromDevice={name}
                   x={x}
                   y={y}
                   pcX={50}

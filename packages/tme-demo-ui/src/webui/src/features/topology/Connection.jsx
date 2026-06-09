@@ -11,47 +11,45 @@ import { CIRCLE_ICON_RATIO, LINE_ICON_RATIO } from 'constants/Layout.js';
 
 import Interface from './Interface';
 import RoundButton from './RoundButton';
+import ConnectionInfo from './ConnectionInfo';
 
 import { getDraggedItem, getSelectedConnection, getEditMode,
-         connectionSelected } from './topologySlice';
+         getConnectionInfoVisible, connectionSelected } from './topologySlice';
 
-import { useDeviceIconPosition } from './Icon';
+import { useIconPosition, useIsExpanded } from './Icon';
 
 import { LayoutContext } from './LayoutContext';
 
 import { stopThenGoToUrl } from 'api/comet';
-import { useQueryQuery } from 'api/query';
+import { useQueryQuery, createItemsSelector } from 'api/query';
 import { useDeletePathMutation } from 'api/data';
-
-
-export const createConnection = async (
-  endpoint1Device, endpoint2Device, create, setValue
-) => {
-  const name = `${endpoint1Device}-${endpoint2Device}`;
-  const path = '/l3vpn:topology/connection';
-  const keypath = `${path}{${name}}`;
-
-  await create({ keypath: path, name, endpoint1Device, endpoint2Device });
-  setValue({ keypath, leaf: 'endpoint-1/device', value: endpoint1Device });
-  setValue({ keypath, leaf: 'endpoint-2/device', value: endpoint2Device });
-};
+import { getOpenTopologyName } from 'features/menu/menuSlice';
+import { useQuerySelection } from './QuerySelectionContext';
 
 
 // === Queries ================================================================
 
-export function useConnectionsQuery(selectFromResult) {
+function __useConnectionsQuery(selectFromResult) {
+  const { connections: connectionsQuery } = useQuerySelection();
   return useQueryQuery({
-    xpathExpr: '/l3vpn:topology/connection',
-    selection: [ 'name', 'endpoint-1/device', 'endpoint-2/device' ],
-    subscribe: { cdbOper: false, skipLocal: false }
+    xpathExpr: '/topologies/topology/links/link',
+    selection: [ '../../name', 'a-end-device', 'z-end-device',
+                 ...connectionsQuery.selection ]
   }, { selectFromResult });
 }
 
-function getConnectedDevices(device, connections) {
+export function useConnectionsQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  return __useConnectionsQuery(useMemo(() =>
+    createItemsSelector('parentName', topology), [ topology ]));
+}
+
+function getConnectedDevices(topology, device, connections) {
   return connections?.reduce(
-    (accumulator, { name, endpoint1Device, endpoint2Device }) => {
-      if (device === endpoint1Device || device === endpoint2Device) {
-        accumulator.push(device === endpoint1Device ? endpoint2Device : endpoint1Device);
+    (accumulator, { parentName, aEndDevice, zEndDevice }) => {
+      if (parentName === topology &&
+          (device === aEndDevice || device === zEndDevice)) {
+        accumulator.push(device === aEndDevice ? zEndDevice : aEndDevice);
       }
       return accumulator;
     }, []
@@ -59,12 +57,13 @@ function getConnectedDevices(device, connections) {
 }
 
 export function useConnectedDevices(name) {
+  const topology = useSelector(getOpenTopologyName);
   const selector = useMemo(() => createSelector(
-    result => JSON.stringify(getConnectedDevices(name, result.data)),
+    result => JSON.stringify(getConnectedDevices(topology, name, result.data)),
     devices => ({ data: JSON.parse(devices) })
-  ), [ name ]);
+  ), [ topology, name ]);
 
-  return useConnectionsQuery(selector).data;
+  return __useConnectionsQuery(selector).data;
 }
 
 // === Utils ==================================================================
@@ -99,19 +98,22 @@ function lineAngle({ x1, y1, x2, y2 }) {
 // === Component ==============================================================
 
 const Connection = memo(function Connection({
-    keypath, aEndDevice, zEndDevice, igp, te, delay }) {
-  console.debug('Connection Render ', keypath);
+    keypath, aEndDevice, zEndDevice, ...connectionInfo }) {
+  console.debug('Connection Render');
 
   const dispatch = useDispatch();
   const [ deletePath ] = useDeletePathMutation();
 
   const layout = useContext(LayoutContext);
 
+  const connectionInfoVisible = useSelector((state) =>
+    getConnectionInfoVisible(state));
   const editMode = useSelector((state) => getEditMode(state));
   const dragging = useSelector((state) => {
     const draggedItem = getDraggedItem(state);
     return !!draggedItem &&
-      (draggedItem.keypath === keypath ||
+      (aEndDevice == (draggedItem.aEndDevice || draggedItem.fromDevice) &&
+       zEndDevice == (draggedItem.zEndDevice || draggedItem.fromDevice) ||
        draggedItem.icon === aEndDevice ||
         draggedItem.icon === zEndDevice);
   });
@@ -135,9 +137,9 @@ const Connection = memo(function Connection({
     dispatch(stopThenGoToUrl(CONFIGURATION_EDITOR_EDIT_URL + keypath));
   }, []);
 
-  const { x: x1, y: y1, ...aEndIcon } = useDeviceIconPosition(aEndDevice);
-  const { x: x2, y: y2, ...zEndIcon } = useDeviceIconPosition(zEndDevice);
-  const expanded = aEndIcon.expanded || zEndIcon.expanded;
+  const { x: x1, y: y1, ...aEndIcon } = useIconPosition(aEndDevice);
+  const { x: x2, y: y2, ...zEndIcon } = useIconPosition(zEndDevice);
+  const expanded = useIsExpanded(aEndDevice) | useIsExpanded(zEndDevice);
   const hidden = aEndIcon.hidden || zEndIcon.hidden;
   const colour = aEndIcon.connectionColour || zEndIcon.connectionColour;
   const { iconSize, dimensions } = layout;
@@ -231,6 +233,11 @@ const Connection = memo(function Connection({
         active={expanded}
         type={BTN_GOTO}
         tooltip="View Connection in Configuration Editor"
+      />
+      <ConnectionInfo
+        actualLineAngle={actualLineAngle}
+        hide={!connectionInfoVisible || expanded}
+        {...connectionInfo}
       />
     </div>
   );

@@ -39,8 +39,9 @@
   --header: rgb(57, 57, 59);
 
   --accordion-level1: var(--theme-base);
+  --accordion-level1-subheader: var(--theme-base-hover);
   --accordion-level1-hover: var(--theme-base-fade);
-  --accordion-level1-fade: var(--theme-base-hover);
+  --accordion-level1-fade: var(--divider);
   --accordion-level1-open-hover: var(--theme-base-bold);
 
   --accordion-level2: var(--theme-alt);

@@ -12,7 +12,7 @@ module.exports = {
     filename: '[name].js',
     path: `${__dirname}/../../webui`,
     assetModuleFilename: '[name][ext]',
-    publicPath: '/custom/tme-demo-ui'
+    publicPath: '/custom/topology-ui'
   },
   mode: 'development',
   plugins: [

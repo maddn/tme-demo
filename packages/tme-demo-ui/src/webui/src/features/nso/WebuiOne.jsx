@@ -6,7 +6,6 @@ import Modal from 'react-modal';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-import { TITLE } from 'constants/Layout';
 import Header from './Header';
 
 import { getError, getHasWriteTransaction, getCommitInProgress,
@@ -56,12 +55,12 @@ class WebuiOne extends PureComponent {
   render() {
     console.debug('NsoWrapper Render');
     const { user, version } = this.props;
-    const { children, error, hasWriteTransaction,
+    const { title = 'Topology', children, error, hasWriteTransaction,
       commitInProgress, bodyOverlayVisible } = this.props;
     return (
       <div className="nso-background">
         <Header
-          user={user} version={version} title={TITLE}
+          user={user} version={version} title={title}
           commitInProgress={commitInProgress}
           hasWriteTransaction={hasWriteTransaction}
         />

@@ -23,7 +23,7 @@ const interfaceSource = {
       x, y, mouseDownPos
     };
     requestAnimationFrame(() => {
-      itemDragged({ fromDevice });
+      itemDragged({ fromDevice, aEndDevice, zEndDevice });
       connectionSelected(undefined);
     });
     return item;

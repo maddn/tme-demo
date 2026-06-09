@@ -10,23 +10,32 @@ import IconSizeSlider from './IconSizeSlider';
 
 import { getDraggedItem,
          getEditMode, editModeToggled,
-         getConfigViewerVisible, configViewerToggled
+         getConfigViewerVisible, configViewerToggled,
+         getConnectionInfoVisible, connectionInfoToggled
 } from './topologySlice';
+import { useQuerySelection } from './QuerySelectionContext';
 
 
-function TopologyViewer () {
+const defaultGetDeviceStatus = ({ platform }) =>
+  platform ? 'reachable' : 'unreachable';
+
+function TopologyViewer ({ getDeviceStatus = defaultGetDeviceStatus }) {
   console.debug('TopologyViewer Render');
 
   const draggedItem = useSelector((state) => getDraggedItem(state));
   const editMode = useSelector((state) => getEditMode(state));
   const configViewerVisible = useSelector((state) =>
     getConfigViewerVisible(state));
+  const connectionInfoVisible = useSelector((state) =>
+    getConnectionInfoVisible(state));
+  const { connections: connectionsQuery } = useQuerySelection();
+  const hasConnectionInfo = connectionsQuery.selection.length > 0;
 
   const dispatch = useDispatch();
 
   return (
     <div className="topology__viewer">
-      <Topology/>
+      <Topology getDeviceStatus={getDeviceStatus}/>
       <div className="footer">
         <ToggleButton
           handleToggle={(value) => {dispatch(editModeToggled(value));}}
@@ -38,6 +47,13 @@ function TopologyViewer () {
           checked={configViewerVisible}
           label="Show Device Config"
           />
+        {hasConnectionInfo &&
+          <ToggleButton
+            handleToggle={(value) => {dispatch(connectionInfoToggled(value));}}
+            checked={connectionInfoVisible}
+            label="Show Link Info"
+            />
+        }
         <IconSizeSlider/>
         <div className={classNames('component__layer', 'container__overlay', {
           'container__overlay--inactive': draggedItem

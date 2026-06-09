@@ -11,17 +11,15 @@ module tme-demo-ui {
     prefix ncs;
   }
 
-  import tailf-webui {
-    prefix webui;
-  }
-
   typedef icon-type {
     type enumeration {
       enum "antenna";
+      enum "cpe";
       enum "customer-router";
       enum "firewall";
       enum "generic";
       enum "load-balancer";
+      enum "probe";
       enum "router";
       enum "service-chain";
       enum "switch";
@@ -37,6 +35,14 @@ module tme-demo-ui {
     description "Normalized relative coordinate";
   }
 
+  typedef background-offset {
+    type enumeration {
+      enum odd;
+      enum even;
+      enum none;
+    }
+  }
+
   grouping icon-coordinates {
     container coord {
       leaf x {
@@ -49,98 +55,55 @@ module tme-demo-ui {
     }
   }
 
-  augment "/webui:webui/webui:data-stores"  {
+  grouping topology-icon-grouping {
+    container icon {
+      leaf type {
+        type icon-type;
+      }
 
-    container static-map {
+      uses icon-coordinates;
 
-      tailf:info "Static map icon information";
-
-      list icon {
-        key name;
-
-        leaf name {
-            type string;
-        }
-
-        choice item-type {
-          case device {
-            leaf device {
-              tailf:non-strict-leafref {
-                path "/ncs:devices/ncs:device/ncs:name";
-              }
-              type string;
-            }
-          }
-        }
-
-        leaf type {
-          type icon-type;
-        }
+      list zoomed {
+        key container;
 
         leaf container {
           type leafref {
-            path "/webui:webui/webui:data-stores/topology-layout/name";
+            path "../../../../../layout/container/name";
           }
         }
 
         uses icon-coordinates;
+      }
 
-        list zoomed {
-          key container;
+      leaf underlay {
+        type boolean;
+      }
+    }
+  }
 
-          leaf container {
-            type leafref {
-              path "/webui:webui/webui:data-stores/topology-layout/name";
-            }
-          }
-
-          uses icon-coordinates;
-        }
-
-        leaf underlay {
-          type boolean;
-        }
+  grouping topology-device-ui-grouping {
+    leaf container {
+      type leafref {
+        path "../../../layout/container/name";
       }
     }
 
-    list topology-layout {
-      key name;
-      ordered-by user;
-      description
-        "List of layout sections (containers) and their widths.
-         The containers will be rendered in order, left to right";
+    uses topology-icon-grouping;
+  }
 
-      leaf name {
-        type string;
-        description
-          "Name of the container.
-           This is referenced by each icon container leaf";
+  grouping topology-layout-grouping {
+    container layout {
+      leaf background-offset {
+        type background-offset;
       }
 
-      leaf width {
-        type uint8 {
-          range "0..100";
-        }
-        must "sum(../../topology-layout/width) = 100" {
-          error-message "The container widths must add up to 100%";
-        }
-        description "The width of the container in percent";
-      }
-
-      leaf title {
-        type string;
-      }
-
-      leaf connection-colour {
-        type string;
-      }
-
-      list zoomed {
-        key title;
+      list container {
+        key name;
         ordered-by user;
-        description
-          "A list of child containers that will be rendered in as the
-           background when the container is zoomed";
+
+        leaf name {
+          type string;
+        }
 
         leaf title {
           type string;
@@ -150,14 +113,37 @@ module tme-demo-ui {
           type uint8 {
             range "0..100";
           }
-          must "sum(../../zoomed/width) = 100" {
+          must "sum(../../container/width) = 100" {
             error-message "The container widths must add up to 100%";
           }
-          description "The width of the container in percent";
+        }
+
+        leaf connection-colour {
+          type string;
+        }
+
+        container zoomed {
+          list container {
+            key title;
+            ordered-by user;
+
+            leaf title {
+              type string;
+            }
+
+            leaf width {
+              type uint8 {
+                range "0..100";
+              }
+              must "sum(../../container/width) = 100" {
+                error-message
+                  "The zoomed container widths must add up to 100%";
+              }
+            }
+          }
         }
       }
     }
   }
+
 }
-
-

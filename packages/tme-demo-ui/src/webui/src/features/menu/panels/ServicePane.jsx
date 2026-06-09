@@ -12,47 +12,54 @@ import { getOpenService, serviceToggled } from '../menuSlice';
 import { highlightedIconsUpdated } from 'features/topology/topologySlice';
 
 import { stopThenGoToUrl } from 'api/comet';
-import { useSetValueMutation, useGetValueQuery } from 'api/data';
+import { useActionMutation, useGetValueQuery } from 'api/data';
 
 
-function ServicePane({ keypath, children, title, label, ...rest }) {
+function ServicePane({
+  keypath, serviceKeypath = keypath, serviceReference = serviceKeypath,
+  children, title, label, ...rest
+}) {
   console.debug('ServicePane Render');
 
-  const queryPath = keypath.endsWith('/..')
-      ? keypath.substring(0, keypath.lastIndexOf('/', keypath.length - 4))
-      : keypath;
+  const queryPath = serviceKeypath.endsWith('/..')
+      ? serviceKeypath.substring(0,
+        serviceKeypath.lastIndexOf('/', serviceKeypath.length - 4))
+      : serviceKeypath;
 
   const { data } = useGetValueQuery({
     keypath: `${queryPath}/modified/devices`,
     tag: 'device-list'
   });
 
-  const isOpen = useSelector((state) => getOpenService(state) === keypath);
+  const isOpen = useSelector((state) =>
+    getOpenService(state) === serviceReference);
   const fade = useSelector((state) => !!getOpenService(state));
 
   const highlightedIcons = useMemo(() => isOpen ? data : [], [ isOpen, data ]);
 
   const dispatch = useDispatch();
-  const toggled = useCallback(keypath => dispatch(
-    serviceToggled({ keypath, highlightedIcons: [] })
-  ));
+  const toggled = useCallback(() =>
+    dispatch(serviceToggled(serviceReference)), [ serviceReference ]);
 
   useEffect(() => isOpen && dispatch(
     highlightedIconsUpdated({ highlightedIcons })
   ), [ highlightedIcons ]);
 
-  const [ setValue ] = useSetValueMutation();
+  const [ action ] = useActionMutation();
   const redeploy = useCallback(async (event) => {
     event.stopPropagation();
-    const now = new Date(Date.now());
-    await setValue({ keypath, leaf: 'touch-date', value: now.toISOString() });
+    await action({
+      transType: 'read_write',
+      path: `${serviceKeypath}/touch`
+    });
     dispatch(stopThenGoToUrl(COMMIT_MANAGER_URL));
-  });
+  }, [ action, dispatch, serviceKeypath ]);
 
   return (
     <NodePane
       keypath={keypath}
       title={title || label}
+      underscore={serviceKeypath !== keypath}
       label={label}
       isOpen={isOpen}
       fade={fade}

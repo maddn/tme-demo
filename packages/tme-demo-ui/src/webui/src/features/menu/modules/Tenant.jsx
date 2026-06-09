@@ -63,6 +63,7 @@ export function Component({ name }) {
     <ServicePane
       key={name}
       title={name}
+      serviceReference={name}
       { ...{ label, keypath, ...swapLabels(data, selection) }}
     >
       <DroppableNodeList

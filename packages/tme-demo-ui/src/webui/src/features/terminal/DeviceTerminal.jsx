@@ -7,10 +7,10 @@ function DeviceTerminal({ device, active }) {
   console.debug('Device Terminal Render');
   const output = '';
 
-  const { address, port, authgroup } = usePlatform(device);
-  const { defaultMapRemoteName } = useAuthgroup(authgroup);
+  const { address, port, authgroup } = usePlatform(device) || {};
+  const { defaultMapRemoteName } = useAuthgroup(authgroup) || {};
 
-  return (address ?
+  return (address && defaultMapRemoteName ?
     <Terminal
       ip={address}
       port={port}

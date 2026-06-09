@@ -67,7 +67,7 @@ export const dataApi = jsonRpcApi.injectEndpoints({
 
     action: build.mutation({
       query: ({ transType, path, params }) => ({
-        method: 'action',
+        method: 'run_action',
         params: { path, params }
       }),
       transformResponse: (response) => {

@@ -29,7 +29,7 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
 
   const [ newItemOpen, setNewItemOpen ] = useState(false);
   const [ minHeight, setMinHeight ] = useState(0);
-  const [ itemDefaults, setItemDefaults ] = useState([]);
+  const [ itemDefaults, setItemDefaults ] = useState();
 
   const dispatch = useDispatch();
   const btnRef = useRef(null);
@@ -39,10 +39,12 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
     openNewItem(defaults) {
       setItemDefaults(defaults);
       setNewItemOpen(true);
+      dispatch(bodyOverlayToggled(true));
     }
-  }), []);
+  }), [ dispatch ]);
 
   const openNewItem = () => {
+    setItemDefaults(undefined);
     setNewItemOpen(true);
     dispatch(bodyOverlayToggled(true));
   };
@@ -69,17 +71,19 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
       dispatch(itemDragged(undefined));
       if (monitor.didDrop()) {
         openNewItem();
-        setItemDefaults(monitor.getDropResult().itemDefaults);
+        setItemDefaults(monitor.getDropResult()?.itemDefaults);
       }
     },
     canDrag: newItemDragType !== undefined
   }));
 
   useEffect(() => {
-    connectPngDragPreview(renderToStaticMarkup(
+    newItemDragIcon && connectPngDragPreview(renderToStaticMarkup(
       <IconSvg type={newItemDragIcon} size={iconSize} />),
       iconSize, dragPreview, true);
-  }, [ iconSize ]);
+  }, [ iconSize, newItemDragIcon ]);
+
+  const defaults = itemDefaults ?? newItemDefaults;
 
   return (
     <Fragment>
@@ -101,7 +105,7 @@ const NodeListWrapper = forwardRef(function NodeListWrapper({
                 label={`${label} Name`}
                 isOpen={newItemOpen}
                 close={closeNewItem}
-                defaults={itemDefaults}
+                defaults={defaults}
                 defaultsPath={defaultsPath}
               />
             </Fragment>

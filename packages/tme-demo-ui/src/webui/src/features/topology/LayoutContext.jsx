@@ -3,7 +3,8 @@ import { createContext, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { getIconSize, getDimensions, getZoomedContainer } from './topologySlice';
-import { useQueryQuery } from 'api/query';
+import { useQueryQuery, createItemsSelector, selectItem } from 'api/query';
+import { getOpenTopologyName } from 'features/menu/menuSlice';
 
 
 export const LayoutContext = createContext();
@@ -19,28 +20,46 @@ export const useIconSize = () => {
 };
 
 export function useLayoutsQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  const selector = useMemo(() =>
+    createItemsSelector('parentName', topology), [ topology ]);
   return useQueryQuery({
-    xpathExpr: '/webui:webui/webui:data-stores/tme-demo-ui:topology-layout',
+    xpathExpr: '/topologies/topology/layout/container',
     selection: [
       'name',
+      '../../name',
       'width',
       'title',
       'connection-colour' ]
-  });
+  }, { selectFromResult: selector });
+}
+
+export function useLayoutOffsetQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  return useQueryQuery({
+    xpathExpr: '/topologies/topology/layout',
+    selection: [
+      '../name',
+      'background-offset' ]
+  }, { selectFromResult: selectItem('parentName', topology) });
 }
 
 export function useZoomedLayoutsQuery() {
+  const topology = useSelector(getOpenTopologyName);
+  const selector = useMemo(() =>
+    createItemsSelector('ancestorName', topology), [ topology ]);
   return useQueryQuery({
-    xpathExpr: '/webui:webui/webui:data-stores/tme-demo-ui:topology-layout/tme-demo-ui:zoomed',
+    xpathExpr: '/topologies/topology/layout/container/zoomed/container',
     selection: [
-      '../name',
+      '../../name',
+      '../../../../name',
       'title',
       'width' ]
-  });
+  }, { selectFromResult: selector });
 }
 
 export function getZoomedLayout(zoomedLayouts, name) {
-  return zoomedLayouts?.filter(
+  return (zoomedLayouts || []).filter(
     ({ parentName }) => parentName == name
   ).map(
     (zoomedLayout, index) => ({
@@ -118,7 +137,9 @@ export const LayoutContextProvider = React.memo(function Context({ children }) {
 
   const { data } = useLayoutsQuery();
   const zoomedLayouts = useZoomedLayoutsQuery().data;
-  const backgroundOffset = 'even';
+  const layout = useLayoutOffsetQuery().data;
+  const backgroundOffset =
+    layout?.backgroundOffset || 'none';
 
   const context = useMemo(() => {
     const { width, height } = dimensions || {};
@@ -160,7 +181,8 @@ export const LayoutContextProvider = React.memo(function Context({ children }) {
         return pxToScreenPc(coord);
       }
     };
-  }, [ data, iconSize, dimensions, zoomedContainerName ]);
+  }, [ data, iconSize, dimensions, zoomedContainerName,
+       backgroundOffset, zoomedLayouts ]);
 
   return (
     <LayoutContext.Provider value={context}>

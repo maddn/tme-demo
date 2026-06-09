@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import classNames from 'classnames';
 
@@ -12,7 +12,7 @@ const NL = 10;
 const CR = 13;
 
 function Terminal({
-  ip, port, username, password, keypath, active, history: initialHistory
+  ip, port, username, password, active, history: initialHistory, onClose
 }) {
   console.debug('Terminal Render');
 
@@ -26,9 +26,14 @@ function Terminal({
   const [ lineBuffer, setLineBuffer ] = useState('');
   const [ history, setHistory ] = useState([ initialHistory ]);
 
+  const queryParams = useMemo(() => Object.fromEntries(Object.entries({
+    ip, port, username, password
+  }).filter(([, value ]) => value !== undefined && value !== null)),
+  [ ip, port, username, password ]);
+
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     `ws://${location.hostname}:${WEBSOCKET_PORT}`,
-    { queryParams: { ip, port, username, password },
+    { queryParams,
       onOpen: () => { getWebSocket().binaryType = 'arraybuffer'; }
     }
   );
@@ -45,6 +50,7 @@ function Terminal({
       resetCursorBuffer();
       setHistory(history.concat(lineBuffer));
       setLineBuffer('Connection closed.');
+      onClose?.();
     }
   }, [ readyState ]);
 

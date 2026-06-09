@@ -216,7 +216,6 @@ all-required-packages = $(local-packages:%=packages/%) $(included-packages:%=pac
 packages: $(all-required-packages)
 	$(MAKE) -C packages/tme-demo/src all
 	$(MAKE) -C packages/tme-demo-ui/src all
-	cp -r post-install-fixes/opt/ncs/packages/* packages
 .PHONY: packages
 
 packages/% :: system/opt/ncs/packages/%

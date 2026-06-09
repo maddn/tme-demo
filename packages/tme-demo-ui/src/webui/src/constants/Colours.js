@@ -34,8 +34,19 @@ export const GENERIC = BLUE;
 
 //State colour map
 export const STATE_COLOURS = {
-  'unreachable'             : DISABLED,
+  //Topology states
+  'not-reachable'           : DISABLED,
   'reachable'               : undefined,
+  'undefined'               : DISABLED,
+  'defined'                 : 'DarkKhaki',
+  'started'                 : 'Khaki',
+  'stopping'                : 'LightSalmon',
+  'ready'                   : 'LightGreen',
+  'unmanaged'               : undefined,
+  'sync-error'              : 'IndianRed',
+
+  //tme-demo states
+  'unreachable'             : DISABLED,
   'not-ready'               : 'DarkKhaki',
   'init'                    : DISABLED,
   'deployed'                : 'DarkKhaki',
@@ -45,6 +56,5 @@ export const STATE_COLOURS = {
   'sync'                    : 'LightGreen',
   'apply-device-templates'  : 'LightGreen',
   'recovering'              : 'DarkKhaki',
-  'ready'                   : undefined,
   'error'                   : 'IndianRed'
 };

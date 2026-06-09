@@ -31,7 +31,7 @@ const getJsonRpcBaseQuery = () => {
       'commit' ].includes(method) ? 'read_write' :
     [ 'query',
       'get_value',
-      'action' ].includes(method) ? 'read' : undefined;
+      'run_action' ].includes(method) ? 'read' : undefined;
 
 
   const getTransaction = async (

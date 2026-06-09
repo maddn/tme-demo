@@ -342,7 +342,7 @@ button {
   transition: max-height 400ms ease-out;
 
   .header {
-    background: var(--divider);
+    background: var(--accordion-level1-subheader);
     border-bottom: none;
 
     &+ .accordion__group:not(:has(.accordion)) {
@@ -352,22 +352,35 @@ button {
 }
 
 .accordion--level0 {
+  background: None;
+
   &> .accordion__header {
     padding: 0.75em 0.75rem 0.75em 1rem;
+
+    &:hover {
+      background: var(--accordion-level1-hover);
+    }
   }
 
   &.accordion--open {
-  margin: 1rem 0px;
+    border-radius: 10px;
+    margin-top: 1rem;
+    overflow: hidden;
 
     &> .accordion__header {
       background: var(--header);
       position: sticky;
     }
   }
+
 }
 
 .accordion--level1 {
   box-shadow: var(--component-shadow);
+
+  &.accordion--closed-fade > .accordion__header {
+    background: var(--accordion-level1-fade);
+  }
 
   &> .accordion__header {
     padding: 0.75em 0.75rem 0.75em 1rem;
@@ -401,13 +414,13 @@ button {
     border-radius: 0 0 10px 10px;
     overflow: hidden;
   }
-
-  &.accordion--closed-fade > .accordion__header {
-    background: var(--accordion-level1-fade);
-  }
 }
 
 .accordion--level2 {
+  &.accordion--closed-fade > .accordion__header {
+    background: var(--accordion-level2-fade);
+  }
+
   &> .accordion__header {
     padding: 0.5em 0.75rem 0.5em 1rem;
 
@@ -431,10 +444,6 @@ button {
       }
 
     }
-  }
-
-  &.accordion--closed-fade > .accordion__header {
-    background: var(--accordion-level2-fade);
   }
 }
 
@@ -467,6 +476,7 @@ button {
 /* Field Group */
 
 .field-group {
+  background: var(--component-background);
   padding: 0.5em 1.25rem 1.5em 1.25rem;
 }
 

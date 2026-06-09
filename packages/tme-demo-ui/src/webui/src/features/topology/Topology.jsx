@@ -5,7 +5,7 @@ import ReactResizeDetector from 'react-resize-detector';
 
 import Container from './Container';
 import Connection, { useConnectionsQuery } from './Connection';
-import Icon, { useIconsQuery, useZoomedIconsQuery, usePlatformsQuery, useAuthgroupsQuery } from './Icon';
+import Icon, { useDevicesQuery, useZoomedIconsQuery, usePlatformsQuery } from './Icon';
 import DragLayerCanvas from './DragLayerCanvas';
 import CustomDragLayer from './CustomDragLayer';
 import LoadingOverlay from '../common/LoadingOverlay';
@@ -16,7 +16,7 @@ import { dimensionsChanged } from './topologySlice';
 import { fetchStatus } from 'api/query';
 
 
-const TopologyBody = React.memo(function TopologyBody () {
+const TopologyBody = React.memo(function TopologyBody ({ getDeviceStatus }) {
   console.debug('TopologyBody Render');
 
   const dispatch = useDispatch();
@@ -26,11 +26,10 @@ const TopologyBody = React.memo(function TopologyBody () {
 
   const layouts = useLayoutsQuery();
   const zoomedLayouts = useZoomedLayoutsQuery();
-  const icons = useIconsQuery();
+  const devices = useDevicesQuery();
   const zoomedIcons = useZoomedIconsQuery();
   const connections = useConnectionsQuery();
   const platforms = usePlatformsQuery();
-  const authgroups = useAuthgroupsQuery();
 
   const resize = () => {
     console.debug('Topology Resize');
@@ -60,17 +59,19 @@ const TopologyBody = React.memo(function TopologyBody () {
               refreshMode="debounce"
               refreshRate={500}
             />
-              {icons.data && connections.data?.map(
-                ({ keypath, endpoint1Device, endpoint2Device }) =>
+              {devices.data && connections.data?.map(
+                ({ keypath, aEndDevice, zEndDevice, ...connection }) =>
                   <Connection
-                    key={`${endpoint1Device} - ${endpoint2Device}`}
+                    key={`${aEndDevice} - ${zEndDevice}`}
                     keypath={keypath}
-                    aEndDevice={endpoint1Device}
-                    zEndDevice={endpoint2Device}
+                    aEndDevice={aEndDevice}
+                    zEndDevice={zEndDevice}
+                    {...connection}
                   />
               )}
-              {icons.data?.map(({ id, name }) =>
-                  <Icon key={name} name={name} />
+              {devices.data?.map(({ name }) =>
+                  <Icon key={name} name={name}
+                    getDeviceStatus={getDeviceStatus} />
               )}
               <DragLayerCanvas canvasRef={canvasRef} />
               <CustomDragLayer canvasRef={canvasRef} />
@@ -80,11 +81,10 @@ const TopologyBody = React.memo(function TopologyBody () {
       <LoadingOverlay items={{
         'Layouts':        fetchStatus(layouts),
         'Zoomed Layouts': fetchStatus(zoomedLayouts),
-        'Icons':          fetchStatus(icons),
+        'Devices':        fetchStatus(devices),
         'Zoomed Icons':   fetchStatus(zoomedIcons),
         'Connections':    fetchStatus(connections),
-        'Platforms':      fetchStatus(platforms),
-        'Authgroups':     fetchStatus(authgroups)
+        'Platforms':      fetchStatus(platforms)
       }}/>
     </LayoutContextProvider>
   );

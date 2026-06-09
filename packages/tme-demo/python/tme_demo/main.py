@@ -51,20 +51,6 @@ class ServiceCallbacks(Service):
         self_plan.set_reached('ncs:ready')
         self.log.info('Service ready')
 
-    @Service.post_modification
-    def cb_post_modification(self, tctx, op, kp, root, proplist):
-        self.log.info('Service postmod(service=', kp, ')')
-        if op not in (ncs.dp.NCS_SERVICE_UPDATE, ncs.dp.NCS_SERVICE_DELETE):
-            return
-
-        # Clean up icons
-        icon_list = root.webui__webui.data_stores.static_map.icon
-        for icon in icon_list:
-            if icon.item_type == 'device':
-                if icon.device not in root.devices.device:
-                    self.log.info('Deleting device icon ', icon.name)
-                    del icon_list[icon.name]
-
 
 class GetDeviceConfiguration(Action):
     @Action.action

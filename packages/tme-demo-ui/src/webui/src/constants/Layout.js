@@ -1,12 +1,7 @@
-export const TITLE = 'Crosswork Network Services Orchestrator | TME Demo';
-
-export const COMMIT_MANAGER_URL = '/webui-one/CommitManager';
 export const CONFIGURATION_EDITOR_URL = '/webui-one/ConfigurationEditor';
 export const CONFIGURATION_EDITOR_EDIT_URL = `${CONFIGURATION_EDITOR_URL}/edit-config/containers/widgets`;
 export const CONFIGURATION_EDITOR_ACTIONS_URL = `${CONFIGURATION_EDITOR_URL}/actions/none/widgets`;
-export const DASHBOARD_URL = '/webui-one/Dashboard';
-export const DEVICE_MANAGER_URL = '/webui-one/DeviceManager';
-export const SERVICE_MANAGER_URL = '/webui-one/ServiceManager';
+export const COMMIT_MANAGER_URL = '/webui-one/CommitManager';
 export const LOGIN_URL = '/login.html';
 
 export const ICON_INITIAL_MAX_SIZE_PC = 10;

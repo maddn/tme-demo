@@ -101,8 +101,26 @@ const slice = (configLines, format) => {
   }
 };
 
+const keypathRegex =
+  /\/(?:[A-Za-z_][\w.-]*:)?[A-Za-z_][\w.-]*(?:\{[^}]*\})?(?:\/(?:[A-Za-z_][\w.-]*:)?[A-Za-z_][\w.-]*(?:\{[^}]*\})?)*/g;
+
+const normalizeKeypath = (keypath) => {
+  const segments = keypath.split('/');
+  const prefix = segments[1]?.match(/^([A-Za-z_][\w.-]*):/)?.[1];
+
+  return prefix ? segments.map((segment, index) =>
+    index > 1 && segment.startsWith(`${prefix}:`)
+      ? segment.slice(prefix.length + 1)
+      : segment
+  ).join('/') : keypath;
+};
+
+const normalizeKeypaths = (config) =>
+  config?.replace(/\[[^=[]*='([^']*)'\]/g, '{$1}')
+    .replace(keypathRegex, normalizeKeypath);
+
 const formatConfig = (config, format) => {
-  const configLines = slice(config.split('\n'), format);
+  const configLines = slice(normalizeKeypaths(config).split('\n'), format);
   return pretty(configLines, format).join('\n');
 };
 
@@ -130,7 +148,7 @@ class Config extends PureComponent {
     try {
       const result = await action({
         path: `/ncs:devices/ncs:device{${
-          device}}/tme-demo:get-configuration`,
+          device}}/get-configuration`,
         params: { format, 'service-meta-data': true }
       });
       this.setState({
@@ -168,8 +186,8 @@ class Config extends PureComponent {
 
   async goToDevice(event, action) {
     event.stopPropagation();
-    const { keypath, stopThenGoToUrl } = this.props;
-    stopThenGoToUrl(`${CONFIGURATION_EDITOR_EDIT_URL}${keypath}`);
+    const { editorKeypath, stopThenGoToUrl } = this.props;
+    stopThenGoToUrl(`${CONFIGURATION_EDITOR_EDIT_URL}${editorKeypath}`);
   }
 
   terminalToggled(event) {
@@ -255,7 +273,7 @@ class Config extends PureComponent {
 
   render() {
     console.debug('Config Render');
-    const { device, managed, consoleState } = this.props;
+    const { device, managed, consoleState, ConfigHeaderActions } = this.props;
     const { format, serviceMetaData, isFetching, config } = this.state;
 
     return (
@@ -293,10 +311,10 @@ class Config extends PureComponent {
           </div>}
           <InlineBtn
             icon={IconTypes.BTN_GOTO}
-            classSuffix="goto"
             tooltip={'View device in Configuration Editor'}
             onClick={(event) => this.goToDevice(event)}
           />
+          <ConfigHeaderActions device={device} managed={managed}/>
         </Fragment>}>
         {managed && <Fragment>
           <div className="config-viewer__btn-row">

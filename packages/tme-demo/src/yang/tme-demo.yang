@@ -13,6 +13,9 @@ module tme-demo {
   import tailf-ncs {
     prefix ncs;
   }
+  import tme-demo-ui {
+    prefix tme-demo-ui;
+  }
   import l3vpn {
     prefix l3vpn;
   }
@@ -67,6 +70,95 @@ module tme-demo {
     description "Data-centre plan component";
   }
 
+  grouping topology-grouping {
+    description
+      "Common topology structure. The using module must augment
+       topology/devices with a device list that provides device-name.";
+
+    list topology {
+      key name;
+
+      leaf name {
+        type string;
+      }
+
+      container devices;
+
+      container links {
+        description "Point to point links between devices in the toplogy.";
+
+        list link {
+          key "a-end-device z-end-device";
+
+          leaf a-end-device {
+            type string;
+            tailf:non-strict-leafref {
+              path "../../../devices/device/device-name";
+            }
+          }
+
+          leaf z-end-device {
+            type string;
+            tailf:non-strict-leafref {
+              path "../../../devices/device/device-name";
+            }
+            must ". != ../a-end-device" {
+              error-message "a-end-device and z-end-device must be different";
+            }
+          }
+        }
+      }
+    }
+  }
+
+  container topologies {
+    uses topology-grouping {
+      augment "topology/devices" {
+        list device {
+          key device-name;
+
+          leaf device-name {
+            type leafref {
+              path "/ncs:devices/ncs:device/ncs:name";
+            }
+            description "NSO device name displayed by the topology UI.";
+          }
+          uses tme-demo-ui:topology-device-ui-grouping;
+        }
+      }
+
+      augment "topology/links/link" {
+        leaf link-vlan {
+          type uint32;
+        }
+
+        container a-end-interface {
+          leaf name {
+            type string;
+          }
+
+          leaf ip-address {
+            type tailf:ip-address-and-prefix-length;
+          }
+        }
+
+        container z-end-interface {
+          leaf name {
+            type string;
+          }
+
+          leaf ip-address {
+            type tailf:ip-address-and-prefix-length;
+          }
+        }
+      }
+
+      augment "topology" {
+        uses tme-demo-ui:topology-layout-grouping;
+      }
+    }
+  }
+
   typedef config-format {
     type enumeration {
       enum cli;
@@ -74,6 +166,33 @@ module tme-demo {
       enum json;
       enum xml;
       enum yaml;
+    }
+  }
+
+  grouping get-configuration-action-grouping {
+    tailf:action get-configuration {
+      tailf:info "Get full device configuration";
+      tailf:actionpoint get-device-configuration;
+
+      input {
+        leaf format {
+          type config-format;
+        }
+
+        leaf service-meta-data {
+          type boolean;
+        }
+      }
+
+      output {
+        leaf format {
+          type config-format;
+        }
+
+        leaf config {
+          type string;
+        }
+      }
     }
   }
 
@@ -212,10 +331,12 @@ module tme-demo {
                  "/ncs:device-name[.=current()]" {
               error-message "The device must be in the C device group";
             }
-            must "count(/l3vpn:topology/l3vpn:connection" +
-                 "/l3vpn:endpoint-1[l3vpn:device=current()])>0 or " +
-                 "count(/l3vpn:topology/l3vpn:connection" +
-                 "/l3vpn:endpoint-2[l3vpn:device=current()])>0" {
+            must "count(/tme-demo:topologies/tme-demo:topology" +
+                 "/tme-demo:links/tme-demo:link" +
+                 "[tme-demo:a-end-device=current()])>0 or " +
+                 "count(/tme-demo:topologies/tme-demo:topology" +
+                 "/tme-demo:links/tme-demo:link" +
+                 "[tme-demo:z-end-device=current()])>0" {
               error-message "The device must have a topology connection";
             }
             mandatory true;
@@ -311,30 +432,7 @@ module tme-demo {
   }
 
   augment "/ncs:devices/ncs:device" {
-    tailf:action get-configuration {
-      tailf:info "Get full device configuration";
-      tailf:actionpoint get-device-configuration;
-
-      input {
-        leaf format {
-          type config-format;
-        }
-
-        leaf service-meta-data {
-          type boolean;
-        }
-      }
-
-      output {
-        leaf format {
-          type config-format;
-        }
-
-        leaf config {
-          type string;
-        }
-      }
-    }
+    uses get-configuration-action-grouping;
   }
 
 }

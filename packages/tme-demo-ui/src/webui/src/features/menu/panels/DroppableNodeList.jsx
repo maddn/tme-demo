@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { useDrop } from 'react-dnd';
 import classNames from 'classnames';
 
-import { ENDPOINT } from 'constants/ItemTypes';
+import { DEVICE } from 'constants/ItemTypes';
 import { CONFIGURATION_EDITOR_EDIT_URL } from 'constants/Layout';
 
 import NodePane from './NodePane';
@@ -21,7 +21,8 @@ export const DROP_BEHAVIOUR_GOTO = 2;
 function DroppableNodeList({
   label, keypath, noTitle,
   baseSelect, labelSelect, isLeafList, selector,
-  allowDrop, accept, dropBehaviour,
+  allowDrop, accept,
+  dropBehaviour = DROP_BEHAVIOUR_CREATE_ONLY,
   calculateName, newItemDefaults,
   newItemDragType, defaultsPath, newItemDragIcon,
   disableCreate, disableGoTo,
@@ -41,7 +42,7 @@ function DroppableNodeList({
   }, { selectFromResult: selector });
 
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
-    accept: ENDPOINT,
+    accept: DEVICE,
     drop: async ({ type, name }) => {
       if (dropBehaviour !== DROP_BEHAVIOUR_OPEN_NEW_ITEM ) {
         const key = typeof calculateName === 'function'
@@ -59,7 +60,7 @@ function DroppableNodeList({
       }
     },
     canDrop: ({ type }, monitor) => {
-      return allowDrop && type === accept;
+      return allowDrop && (!accept || type === accept);
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),

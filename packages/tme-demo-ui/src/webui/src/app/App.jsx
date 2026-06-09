@@ -5,12 +5,19 @@ import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import WebuiOne from 'features/nso/WebuiOne';
-import MenuSidebar from 'features/menu/MenuSidebar';
 import TopologyViewer from 'features/topology/TopologyViewer';
 import ConfigViewer from 'features/config/ConfigViewer';
 import TerminalViewer from 'features/terminal/TerminalViewer';
+import MenuSidebar from 'features/menu/MenuSidebar';
+import DeviceTerminal from 'features/terminal/DeviceTerminal';
 
 import { getEditMode } from 'features/topology/topologySlice';
+import {
+  QuerySelectionProvider
+} from 'features/topology/QuerySelectionContext';
+
+const getDeviceStatus = ({ platform }) =>
+  platform ? 'reachable' : 'unreachable';
 
 function App () {
   console.debug('App Render');
@@ -19,16 +26,18 @@ function App () {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <WebuiOne>
-        <MenuSidebar/>
-        <div className={classNames('centre-pane', {
-          'centre-pane--edit-mode': editMode
-        })}>
-          <TopologyViewer/>
-          <TerminalViewer/>
-        </div>
-        <ConfigViewer/>
-      </WebuiOne>
+      <QuerySelectionProvider>
+        <WebuiOne title="TME Demo">
+          <MenuSidebar/>
+          <div className={classNames('centre-pane', {
+            'centre-pane--edit-mode': editMode
+          })}>
+            <TopologyViewer getDeviceStatus={getDeviceStatus}/>
+            <TerminalViewer DeviceTerminal={DeviceTerminal}/>
+          </div>
+          <ConfigViewer/>
+        </WebuiOne>
+      </QuerySelectionProvider>
     </DndProvider>
   );
 }

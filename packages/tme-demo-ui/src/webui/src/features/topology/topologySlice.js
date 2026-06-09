@@ -12,6 +12,8 @@ export const getVisibleUnderlays = state => state.topology.visibleUnderlays;
 export const getZoomedContainer = state => state.topology.zoomedContainer;
 export const getEditMode = state => state.topology.editMode;
 export const getConfigViewerVisible = state => state.topology.configViewerVisible;
+export const getConnectionInfoVisible = state =>
+  state.topology.connectionInfoVisible;
 export const getIconSize = state => state.topology.iconSize;
 export const getHighlightedIcons = state => state.topology.highlightedIcons;
 export const getOpenTerminals = state => state.topology.openTerminals;
@@ -27,6 +29,7 @@ const topologySlice = createSlice({
     expandedIcons: [],
     visibleUnderlays: [],
     editMode: false,
+    connectionInfoVisible: false,
     openTerminals: []
   },
   reducers: {
@@ -87,6 +90,10 @@ const topologySlice = createSlice({
       state.configViewerVisible = payload;
     },
 
+    connectionInfoToggled: (state, { payload }) => {
+      state.connectionInfoVisible = payload;
+    },
+
     iconSizeChanged: (state, action) => {
       state.iconSize = action.payload;
     },
@@ -111,9 +118,8 @@ const topologySlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase('menu/serviceToggled', (state, { payload }) => {
-      const { highlightedIcons } = payload;
-      state.highlightedIcons = highlightedIcons;
+    builder.addCase('menu/serviceToggled', (state) => {
+      state.highlightedIcons = [];
     });
   }
 });
@@ -123,7 +129,7 @@ export const {
   dimensionsChanged, itemDragged, iconHovered,
   connectionSelected, iconSelected, iconExpandToggled,
   underlayToggled, containerZoomToggled,
-  editModeToggled, configViewerToggled, linkMetricsToggled,
+  editModeToggled, configViewerToggled, connectionInfoToggled,
   iconSizeChanged, terminalToggled, hideConsoleViewer,
   highlightedIconsUpdated } = actions;
 export default reducer;

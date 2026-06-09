@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import DragLayerDrawer from './DragLayerDrawer';
 
-import { useIcon, useIconsQuery } from './Icon';
+import { useDevice, useDevicesQuery } from './Icon';
 import { useConnectedDevices } from './Connection';
 
 import { getDraggedItem, getHoveredIcon } from './topologySlice';
@@ -14,24 +14,24 @@ function CustomDragLayer({ canvasRef }) {
 
   const iconPosition = useIconPositionCalculator();
   const draggedItem = useSelector((state) => getDraggedItem(state)) || {};
-  const { device, fromDevice } = draggedItem;
+  const { icon, fromDevice } = draggedItem;
 
-  const connectedDevices = useConnectedDevices(device);
+  const connectedDevices = useConnectedDevices(icon);
 
   const fromDevices = fromDevice ? [ fromDevice ] : (
     connectedDevices);
-  const hoveredIcon = useIcon(useSelector((state) => getHoveredIcon(state)));
+  const hoveredDevice = useDevice(useSelector((state) => getHoveredIcon(state)));
 
-  const icons = useIconsQuery().data;
+  const devices = useDevicesQuery().data;
 
-  const getIcon = (deviceName) =>
-    icons?.find(icon => icon.device === deviceName);
+  const getDevice = (deviceName) =>
+    devices?.find(device => device.name === deviceName);
 
   return (
     <DragLayerDrawer
       canvasRef={canvasRef}
-      fromIcons={fromDevices?.map(device => iconPosition(getIcon(device)))}
-      toIcon={hoveredIcon && iconPosition(hoveredIcon)}
+      fromIcons={fromDevices?.map(device => iconPosition(getDevice(device)))}
+      toIcon={hoveredDevice && iconPosition(hoveredDevice)}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { jsonRpcApi } from './index';
-import { updateQueryData, removeKeys, removePredicates } from './query';
+import { updateQueryData,
+         cachePathFromXpath, cachePathFromKeypath } from './query';
 
 export const unsubscribeAll = () => async (dispatch, getState) => {
   const state = getState();
@@ -26,9 +27,9 @@ const processCometUpdates = (results, dispatch, getState) => {
     message.changes?.forEach(({ keypath, op, value }) => {
       if (op === 'value_set') {
         const [ , itemKeypath, leaf ] = keypath.match(/(.*)\/(.*)/);
-        const queryKey = removeKeys(itemKeypath);
+        const queryKey = cachePathFromKeypath(itemKeypath);
         const query = queries.find(({ xpathExpr }) =>
-          removePredicates(xpathExpr) === queryKey
+          cachePathFromXpath(xpathExpr) === queryKey
         );
         if (query?.selection.includes(leaf)) {
           const { data } = jsonRpcApi.endpoints['query'].select(queryKey)(state);
@@ -41,9 +42,9 @@ const processCometUpdates = (results, dispatch, getState) => {
           }
         }
       } else if (op === 'created') {
-        const queryKey = removeKeys(keypath);
+        const queryKey = cachePathFromKeypath(keypath);
         const query = queries.find(({ xpathExpr }) =>
-          removePredicates(xpathExpr) === queryKey
+          cachePathFromXpath(xpathExpr) === queryKey
         );
         if (query) {
           const { data } = jsonRpcApi.endpoints['query'].select(queryKey)(state);
@@ -53,8 +54,8 @@ const processCometUpdates = (results, dispatch, getState) => {
         }
       } else if (op === 'deleted') {
         queries.filter(({ xpathExpr }) => {
-          const queryKey = removePredicates(xpathExpr);
-          if (queryKey.startsWith(removeKeys(keypath))) {
+          const queryKey = cachePathFromXpath(xpathExpr);
+          if (queryKey.startsWith(cachePathFromKeypath(keypath))) {
             const { data } = jsonRpcApi.endpoints['query'].select(queryKey)(state);
             data.forEach(({ keypath: itemKeypath }) => {
               if (itemKeypath.startsWith(keypath)) {

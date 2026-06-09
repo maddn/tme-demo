@@ -127,20 +127,6 @@ module l3vpn {
     }
   }
 
-  grouping connection-grouping {
-    leaf device {
-      type leafref {
-        path "/ncs:devices/ncs:device/ncs:name";
-      }
-    }
-    leaf interface {
-      type string;
-    }
-    leaf ip-address {
-      type tailf:ipv4-address-and-prefix-length;
-    }
-  }
-
   grouping qos-match-grouping {
     leaf source-ip {
       type qos-match-type;
@@ -160,44 +146,6 @@ module l3vpn {
     leaf protocol {
       tailf:info "Source IP protocol";
       type protocol-type;
-    }
-  }
-
-  container topology {
-    list role {
-      key "role";
-      tailf:cli-compact-syntax;
-      leaf role {
-        type enumeration {
-          enum ce;
-          enum pe;
-          enum p;
-        }
-      }
-
-      leaf-list device {
-        type leafref {
-          path "/ncs:devices/ncs:device/ncs:name";
-        }
-      }
-    }
-
-    list connection {
-      key "name";
-      leaf name {
-        type string;
-      }
-      container endpoint-1 {
-        tailf:cli-compact-syntax;
-        uses connection-grouping;
-      }
-      container endpoint-2 {
-        tailf:cli-compact-syntax;
-        uses connection-grouping;
-      }
-      leaf link-vlan {
-        type uint32;
-      }
     }
   }
 

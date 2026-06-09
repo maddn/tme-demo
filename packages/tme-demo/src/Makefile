@@ -13,7 +13,8 @@ FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 # YANGPATH += ../../<ned-name>/src/ncsc-out/modules/yang \
 # 	../../<pkt-name>/src/yang
 
-YANGPATH += ../../cisco-ios/src/ncsc-out/modules/yang \
+YANGPATH += ../../tme-demo-ui/src/yang \
+	          ../../cisco-ios/src/ncsc-out/modules/yang \
 	          ../../cisco-ios/src/ \
 	          ../../cisco-iosxr/src/ncsc-out/modules/yang \
 	          ../../cisco-iosxr/src/ \
