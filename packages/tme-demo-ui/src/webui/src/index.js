@@ -1,4 +1,4 @@
-import './index.css';
+import 'index.css';
 import 'tippy.js/dist/tippy.css';
 
 import React from 'react';
@@ -28,7 +28,7 @@ ReactDOM.render(
 );
 
 if (module.hot) {
-  module.hot.accept('./api', () =>
-      store.replaceReducer(require('./api').default)
+  module.hot.accept('api', () =>
+      store.replaceReducer(require('api').default)
   );
 }

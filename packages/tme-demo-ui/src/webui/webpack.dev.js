@@ -17,7 +17,7 @@ module.exports = {
   mode: 'development',
   plugins: [
     new HTMLWebpackPlugin({
-      template: `${__dirname}/src/index.html`,
+      template: `${__dirname}/webui/index.html`,
       filename: 'index.html',
       inject: 'body'
     }),
@@ -54,6 +54,7 @@ module.exports = {
     ]
   },
   resolve: {
+    symlinks: false,
     extensions: [ '', '.js', '.jsx' ]
   }
 };

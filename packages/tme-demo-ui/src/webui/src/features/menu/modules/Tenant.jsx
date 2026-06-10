@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 
 import { CUSTOMER_ROUTER, SWITCH } from 'constants/Icons';
 
-import ServicePane from '../panels/ServicePane';
+import ServicePane from 'features/menu/panels/ServicePane';
 import DroppableNodeList, { DROP_BEHAVIOUR_OPEN_NEW_ITEM,
-       DROP_BEHAVIOUR_GOTO } from '../panels/DroppableNodeList';
+       DROP_BEHAVIOUR_GOTO } from 'features/menu/panels/DroppableNodeList';
 
 import { useQueryQuery, useMemoizeWhenFetched, swapLabels, selectItem,
          createItemsSelector, useQueryState } from 'api/query';

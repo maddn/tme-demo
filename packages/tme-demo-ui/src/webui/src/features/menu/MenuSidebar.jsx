@@ -2,8 +2,8 @@ import React from 'react';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import Sidebar from '../common/Sidebar';
-import NodeListWrapper from './panels/NodeListWrapper';
+import Sidebar from 'features/common/Sidebar';
+import NodeListWrapper from 'features/menu/panels/NodeListWrapper';
 import { topologyToggled,
          getOpenTopology } from 'features/menu/menuSlice';
 

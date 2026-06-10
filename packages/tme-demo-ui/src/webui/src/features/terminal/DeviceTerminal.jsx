@@ -1,6 +1,6 @@
 import React from 'react';
-import Terminal from './Terminal';
-import { usePlatform, useAuthgroup } from '../topology/Icon';
+import Terminal from 'features/terminal/Terminal';
+import { usePlatform, useAuthgroup } from 'features/topology/Icon';
 
 
 function DeviceTerminal({ device, active }) {
