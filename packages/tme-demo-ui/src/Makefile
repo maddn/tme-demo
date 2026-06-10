@@ -33,10 +33,10 @@ clean-webui: clean
 	rm -rf ../webui
 
 ../webui:
-	$(MAKE) -C webui all || exit 1
+	$(MAKE) -C ui all || exit 1
 
 strip:
-	rm -rf webui/node_modules
+	rm -rf ui/node_modules
 .PHONY: strip
 
 start-ssh-proxy:

@@ -114,7 +114,7 @@ post-ncs-start-data:
 
 demo_dir = $(shell basename $(CURDIR))
 dist: stop clean
-	$(MAKE) -C packages/tme-demo-ui/src/webui || exit 1;
+	$(MAKE) -C packages/tme-demo-ui/src/ui || exit 1;
 	cd .. ; \
 	tar -cvf $(demo_dir).tar \
 	  --exclude='.git' \
