@@ -7,7 +7,7 @@ import NodeListWrapper from 'features/menu/panels/NodeListWrapper';
 import { topologyToggled,
          getOpenTopology } from 'features/menu/menuSlice';
 
-import * as Tenant from './modules/Tenant';
+import * as Tenant from './Tenant';
 
 const demoTopology = '/topologies/topology{demo}';
 

@@ -8,8 +8,8 @@ import WebuiOne from 'features/nso/WebuiOne';
 import TopologyViewer from 'features/topology/TopologyViewer';
 import ConfigViewer from 'features/config/ConfigViewer';
 import TerminalViewer from 'features/terminal/TerminalViewer';
-import MenuSidebar from 'features/menu/MenuSidebar';
-import DeviceTerminal from 'features/terminal/DeviceTerminal';
+import MenuSidebar from './MenuSidebar';
+import DeviceTerminal from './DeviceTerminal';
 
 import { getEditMode } from 'features/topology/topologySlice';
 import {
