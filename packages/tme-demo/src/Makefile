@@ -5,7 +5,11 @@ all: fxs
 include $(NCS_DIR)/src/ncs/build/include.ncs.mk
 
 SRC = $(wildcard yang/*.yang)
-DIRS = ../load-dir java/src/$(JDIR)/$(NS)
+COMMON_YANG_DIR = ../../../common-topology/yang
+COMMON_YANG = $(wildcard $(COMMON_YANG_DIR)/*.yang.in)
+COMMON_SUBMODULE_DIR = ../load-dir/generated-yang
+COMMON_SUBMODULES = $(COMMON_YANG:$(COMMON_YANG_DIR)/%.yang.in=$(COMMON_SUBMODULE_DIR)/%.yang)
+DIRS = ../load-dir $(COMMON_SUBMODULE_DIR) java/src/$(JDIR)/$(NS)
 FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 
 ## Uncomment and patch the line below if you have a dependency to a NED
@@ -13,7 +17,7 @@ FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 # YANGPATH += ../../<ned-name>/src/ncsc-out/modules/yang \
 # 	../../<pkt-name>/src/yang
 
-YANGPATH += ../../tme-demo-ui/src/yang \
+YANGPATH += $(COMMON_SUBMODULE_DIR) \
 	          ../../cisco-ios/src/ncsc-out/modules/yang \
 	          ../../cisco-ios/src/ \
 	          ../../cisco-iosxr/src/ncsc-out/modules/yang \
@@ -35,6 +39,13 @@ fxs: $(DIRS) $(FXS)
 
 $(DIRS):
 	mkdir -p $@
+
+$(FXS): $(COMMON_SUBMODULES)
+
+$(COMMON_SUBMODULE_DIR)/%.yang: $(COMMON_YANG_DIR)/%.yang.in | $(COMMON_SUBMODULE_DIR)
+	sed -e 's|@PARENT_MODULE@|tme-demo|g' \
+	    -e 's|@PARENT_PREFIX@|tme-demo|g' \
+	    $< > $@
 
 ../load-dir/%.fxs: yang/%.yang
 	$(NCSC)  `ls $*-ann.yang  > /dev/null 2>&1 && echo "-a $*-ann.yang"` \

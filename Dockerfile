@@ -79,6 +79,7 @@ RUN sh /tmp/nso --system-install --non-interactive && rm /tmp/nso
 SHELL ["/bin/sh", "-lc"]
 
 COPY /system /
+COPY /common-topology /opt/ncs/common-topology
 COPY /packages /build/packages
 WORKDIR /opt/ncs
 
