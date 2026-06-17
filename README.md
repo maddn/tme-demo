@@ -41,9 +41,9 @@ bar at the bottom of the browser window.
 
 ## Making changes
 All changes made in the demo UI have to be explicitly committed. This can be
-done using the standard NSO *Commit Manager*. The shortcut bar at the bottom of
-the browser window can be used to navigate between the *Commit Manager* and
-*TME Demo* UI.
+done using the standard NSO *Transactions* application. The rocket icon in the
+header of the browser window can be used to navigate to the *Transactions*
+screen.
 
 There are also *Commit* and *Revert* buttons in the top right of header bar in
 the *TME Demo* UI. These buttons will instantly commit or revert changes with
@@ -115,10 +115,10 @@ By default, the demo uses an entirely simulated environment, suitable for
 running on a laptop.
 
 ## Pre-requites
-* NSO 5.1
-* Java 8
-* Python 2.7
-* Node.js NPM 6.9
+* NSO 6.7
+* Java 21
+* Python 3.10+
+* Node.js NPM
 * Apache Ant
 * GNU Make
 
@@ -132,15 +132,25 @@ https://community.cisco.com/t5/nso-developer-hub-discussions/netsim-getting-quot
 The demo is dependent on several packages. The NED and example-package
 dependencies are copied automatically from the NSO installation:
 
-Automatic dependencies (copied from `<nso-install-dir>/packages/ned`):
-- cisco-ios-cli-3.8
-- cisco-iosxr-cli-3.5
-- juniper-junos-nc-3.0
-- alu-sr-cli-3.4
-- l3vpn (copied from
-  `<nso-install-dir>/examples.ncs/service-provider/mpls-vpn/packages`)
+Automatic dependencies:
+- cisco-ios-netsim-cli-1.0
+- cisco-iosxr-netsim-cli-1.0
+- cisco-nx-netsim-cli-1.0
+- juniper-junos-netsim-nc-1.0
+- alu-sr-netsim-cli-1.0
+- dell-ftos-netsim-cli-1.0
+- l3vpn, copied from
+  `<nso-install-dir>/examples.ncs/service-management/mpls-vpn-java/packages/l3vpn`
+- datacenter, copied from
+  `<nso-install-dir>/examples.ncs/service-management/datacenter-connectivity/packages/connectivity`
 
 No external function-pack dependencies are required.
+
+This repository uses the `common-topology` git submodule for shared topology
+YANG, Python, and UI source. If the repository was cloned without submodules,
+initialise it before compiling:
+
+    > git submodule update --init
 
 ## Compiling the demo
 The demo directory is a complete NSO running directory.
@@ -212,9 +222,9 @@ tile in the *Application hub*.
 4.  Repeat the previous step for *ce4*. This time ensure the `ip-network` is
     changed from the default value (this must be unique for each endpoint).
 
-5.  Navigate to the NSO *Commit Manager* using the shortcut bar at the bottom
-    of the browser window. Observe the changes to the service model shown on
-    the *changes* tab.
+5.  Navigate to the NSO *Transactions* screen using the rocket icon in the
+    header of the browser window. Observe the changes to the service model
+    shown on the *changes* tab.
 
 6.  Click the *config* tab. These are the pending device model changes, in the
     NSO CDB, shown in the NSO internal format. NSO has taken the service intent
@@ -247,24 +257,24 @@ tile in the *Application hub*.
 ## Modify the service
 10. Click the `...` button next to the *ce2* endpoint to display the endpoint
     in the NSO *Configuration Editor*. To demonstrate a simple change, update
-    the `bandwidth` value and navigate to the NSO *Commit Manager* using the
-    shortcut bar at the bottom of the browser window. Look at the *config* and
-    *native config* tabs to see that NSO has calculated the **minimal changes**
+    the `bandwidth` value and navigate to the NSO *Transactions* screen
+    using the rocket icon in the header of the browser window. Look at the
+    *config* and *native config* tabs to see that NSO has calculated the **minimal changes**
     required to update the bandwidth. Click the *Commit* button on the right of
     the header bar and choose *Yes, commit* from the confirmation dialog to
     push the changes to the devices.
 
 11. Repeat the previous step, but this time change the `ce-device` to *ce1*.
-    The changes in the NSO *Commit Manager* show NSO is able to handle this
-    more complex change by cleanly removing all the configuration from *ce2*,
-    and applying new configuration to *ce1*, as well as updating the
+    The changes in the NSO *Transactions* screen show NSO is able to
+    handle this more complex change by cleanly removing all the configuration
+    from *ce2*, and applying new configuration to *ce1*, as well as updating the
     configuration on *pe0* where necessary.
 
 12. Finally, from the *TME Demo* UI click the `...` button next to the tenant
     name in the sidebar to display the tenant in the NSO *Configuration
     Editor*. Click the `l3vpn` container and change the `qos-policy`. Navigate
-    to the NSO *Commit Manager* using the shortcut bar at the bottom of the
-    browser window. Look at the *config* and *native config* tabs to see that
+    to the NSO *Transactions* screen using the rocket icon in the header
+    of the browser window. Look at the *config* and *native config* tabs to see that
     NSO has calculated the changes required to all devices in the VPN to apply
     the new QoS policy. Click the *Commit* button on the right of the header
     bar and choose *Yes, commit* from the confirmation dialog to apply the
@@ -288,7 +298,7 @@ tile in the *Application hub*.
     configuration that should be in *pe3*. The service can be repaired
     automatically using NSO's re-deploy feature. Click the *redeploy* button
     next to the tenant name in the sidebar (the tooltip for this button is
-    *Touch L3 VPN and go to Commit Manager*). NSO uses the original service
+    *Touch L3 VPN and go to Transactions*). NSO uses the original service
     intent, and re-calculates what configuration is required in the network to
     satisfy the service intent.
 
