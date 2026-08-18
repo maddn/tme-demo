@@ -5,11 +5,19 @@ import { useSelector } from 'react-redux';
 import classNames from 'classnames';
 
 import WebuiOne from 'features/nso/WebuiOne';
+import Sidebar from 'features/common/Sidebar';
 import TopologyViewer from 'features/topology/TopologyViewer';
 import ConfigViewer from 'features/config/ConfigViewer';
 import TerminalViewer from 'features/terminal/TerminalViewer';
+import McpExplorer from 'features/mcp/explorer/McpExplorer';
+import McpViewer from 'features/mcp/viewer/McpViewer';
 import MenuSidebar from './MenuSidebar';
 import DeviceTerminal from './DeviceTerminal';
+import {
+  POLICY_RULES,
+  SUGGESTED_MESSAGE_GROUPS,
+  SERVICE_SCHEMAS
+} from './mcpCatalog';
 
 import { getEditMode } from 'features/topology/topologySlice';
 import {
@@ -28,14 +36,26 @@ function App () {
     <DndProvider backend={HTML5Backend}>
       <QuerySelectionProvider>
         <WebuiOne title="TME Demo">
-          <MenuSidebar/>
+          <Sidebar>
+            <MenuSidebar/>
+          </Sidebar>
           <div className={classNames('centre-pane', {
             'centre-pane--edit-mode': editMode
           })}>
             <TopologyViewer getDeviceStatus={getDeviceStatus}/>
             <TerminalViewer DeviceTerminal={DeviceTerminal}/>
+            <McpViewer
+              suggestedMessageGroups={SUGGESTED_MESSAGE_GROUPS}
+              serviceSchemas={SERVICE_SCHEMAS}
+            />
           </div>
-          <ConfigViewer/>
+          <Sidebar>
+            <ConfigViewer />
+            <McpExplorer
+              policyRules={POLICY_RULES}
+              serviceSchemas={SERVICE_SCHEMAS}
+            />
+          </Sidebar>
         </WebuiOne>
       </QuerySelectionProvider>
     </DndProvider>

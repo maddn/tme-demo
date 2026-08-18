@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import Sidebar from 'features/common/Sidebar';
+import SidebarPane from 'features/common/SidebarPane';
 import NodeListWrapper from 'features/menu/panels/NodeListWrapper';
 import ServiceList from 'features/menu/panels/ServiceList';
 import { topologyToggled,
@@ -28,7 +28,7 @@ function MenuSidebar() {
   }, [ dispatch, openTopology ]);
 
   return (
-    <Sidebar>
+    <SidebarPane>
       <NodeListWrapper
         title="Tenants"
         label={Tenant.label}
@@ -50,7 +50,7 @@ function MenuSidebar() {
         contextName={openTenantName}
         disableCreate={true}
       />
-    </Sidebar>
+    </SidebarPane>
   );
 }
 
