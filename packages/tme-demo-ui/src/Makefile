@@ -30,6 +30,7 @@ clean:
 .PHONY: clean
 
 clean-webui: clean
+	$(MAKE) -C ui clean || exit 1
 	rm -rf ../webui
 
 ../webui:
@@ -44,8 +45,19 @@ start-ssh-proxy:
 	echo $$! > /tmp/SSH_PROXY_PID
 	cat /tmp/SSH_PROXY_PID
 
+start-assistant-proxy:
+	nohup node ../webui/assistant-proxy.js > /tmp/mcp-assistant-proxy.out 2>&1 &\
+	echo $$! > /tmp/MCP_ASSISTANT_PROXY_PID
+	cat /tmp/MCP_ASSISTANT_PROXY_PID
+
 stop-ssh-proxy:
 	if [ -f /tmp/SSH_PROXY_PID ]; then \
 	  kill $$(cat /tmp/SSH_PROXY_PID); \
 	  rm /tmp/SSH_PROXY_PID; \
+	fi
+
+stop-assistant-proxy:
+	if [ -f /tmp/MCP_ASSISTANT_PROXY_PID ]; then \
+	  kill $$(cat /tmp/MCP_ASSISTANT_PROXY_PID); \
+	  rm /tmp/MCP_ASSISTANT_PROXY_PID; \
 	fi

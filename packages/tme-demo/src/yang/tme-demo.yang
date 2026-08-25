@@ -71,6 +71,8 @@ module tme-demo {
   }
 
   container topologies {
+    uses assistant-settings-grouping;
+
     uses topology-grouping {
       augment "topology/devices" {
         list device {

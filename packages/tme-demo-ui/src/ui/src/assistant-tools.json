@@ -1,0 +1,235 @@
+{
+  "tme_demo_tme_demo_tenant_update": {
+    "description": "Update a tme-demo tenant service. Use this for tenant VPN or data-centre changes, including adding endpoints.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tenant service name."
+        },
+        "l3vpn": {
+          "type": "object",
+          "description": "Layer3 VPN settings for this tenant.",
+          "properties": {
+            "route-distinguisher": {
+              "type": "integer",
+              "description": "Route distinguisher/target identifier for the tenant VPN."
+            },
+            "qos-policy": {
+              "type": "string",
+              "description": "VPN QoS policy."
+            },
+            "endpoint": {
+              "type": "array",
+              "description": "VPN endpoints/sites to add or update.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "ce-device"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Endpoint/site identifier."
+                  },
+                  "ce-device": {
+                    "type": "string",
+                    "description": "CE endpoint device name."
+                  },
+                  "ce-interface": {
+                    "type": "string",
+                    "description": "CE local GigabitEthernet interface."
+                  },
+                  "ip-network": {
+                    "type": "string",
+                    "description": "CE interface private IPv4 prefix."
+                  },
+                  "as-number": {
+                    "type": "integer",
+                    "description": "CE device AS number."
+                  },
+                  "bandwidth": {
+                    "type": "integer",
+                    "description": "Endpoint bandwidth in bps."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "data-centre": {
+          "type": "object",
+          "description": "Data centre connectivity settings for this tenant.",
+          "properties": {
+            "vlan": {
+              "type": "integer",
+              "description": "Data centre tenant VLAN."
+            },
+            "ip-network": {
+              "type": "string",
+              "description": "Private IPv4 prefix for the data centre service."
+            },
+            "preserve-vlan-tags": {
+              "type": "boolean",
+              "description": "Preserve VLAN tags."
+            },
+            "endpoint": {
+              "type": "array",
+              "description": "Data centre endpoints to add or update.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "device",
+                  "compute"
+                ],
+                "properties": {
+                  "device": {
+                    "type": "string",
+                    "description": "TOR switch device name."
+                  },
+                  "compute": {
+                    "type": "string",
+                    "enum": [
+                      "compute4",
+                      "compute3",
+                      "compute2",
+                      "compute1",
+                      "compute0"
+                    ],
+                    "description": "Compute node."
+                  },
+                  "connect-multiple-vlans": {
+                    "type": "boolean",
+                    "description": "Make the access port a trunk."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "__commit_dry_run": {
+          "type": "boolean",
+          "description": "Preview the tenant update without applying it."
+        },
+        "__commit_dry_run_format": {
+          "type": "string",
+          "enum": [
+            "cli",
+            "xml",
+            "native"
+          ],
+          "description": "Output format for commit dry-run results."
+        }
+      }
+    }
+  },
+  "tme_demo_tme_demo_tenant_re_deploy": {
+    "description": "Redeploy an existing tme-demo tenant service.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "__key__tenant__name"
+      ],
+      "properties": {
+        "__key__tenant__name": {
+          "type": "string",
+          "description": "Tenant service name."
+        },
+        "dry-run": {
+          "type": "object",
+          "description": "Preview the redeploy without applying it. Use an empty object unless a dry-run output format is explicitly requested.",
+          "properties": {
+            "outformat": {
+              "type": "string",
+              "enum": [
+                "cli-c",
+                "native",
+                "xml",
+                "cli"
+              ],
+              "description": "Dry-run output format. Only include when the user explicitly asks for a specific format."
+            },
+            "with-service-meta-data": {
+              "type": "boolean",
+              "description": "Include service metadata in dry-run output."
+            }
+          }
+        },
+        "reconcile": {
+          "type": "object",
+          "description": "Reconcile service ownership of existing device configuration.",
+          "properties": {
+            "attach-non-service-config": {
+              "type": "boolean",
+              "description": "Attach existing non-service configuration to the service."
+            },
+            "detach-non-service-config": {
+              "type": "boolean",
+              "description": "Detach non-service configuration from the service."
+            },
+            "keep-non-service-config": {
+              "type": "boolean",
+              "description": "Keep existing non-service configuration."
+            },
+            "discard-non-service-config": {
+              "type": "boolean",
+              "description": "Discard existing non-service configuration."
+            }
+          }
+        }
+      }
+    }
+  },
+  "devices_device_sync_from": {
+    "description": "Sync one NSO device from the network.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "string",
+          "description": "NSO device name."
+        }
+      }
+    }
+  },
+  "devices_device_check_sync": {
+    "description": "Check whether one NSO device is in sync.",
+    "chainable": true,
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "string",
+          "description": "NSO device name."
+        }
+      }
+    }
+  },
+  "devices_device_compare_config": {
+    "description": "Compare one NSO device config against NSO intended config.",
+    "chainable": true,
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "string",
+          "description": "NSO device name."
+        }
+      }
+    }
+  }
+}

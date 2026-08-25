@@ -1,8 +1,16 @@
 FROM debian:bookworm AS deb-base
 
+ARG INCLUDE_OLLAMA=true
+
+ENV OLLAMA_MODELS=/opt/ollama/models
+
+COPY ca-certificates/* /usr/local/share/ca-certificates/
+
 RUN apt-get update \
   && echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
   && apt-get install -qy --no-install-recommends \
+     ca-certificates \
+     curl \
      iputils-ping \
      less \
      libexpat1 \
@@ -21,6 +29,7 @@ RUN apt-get update \
      wget \
      xsltproc \
      xmlstarlet \
+     zstd \
   && pip3 install --break-system-packages pyyaml \
   && apt-get -qy purge python3-pip \
   && apt-get -qy autoremove \
@@ -30,6 +39,21 @@ RUN apt-get update \
   # Add root to ncsadmin group for easier command-line tools usage
   && groupadd ncsadmin \
   && usermod -a -G ncsadmin root
+
+RUN if [ "${INCLUDE_OLLAMA}" = "true" ]; then \
+      curl -fsSL https://ollama.com/install.sh -o /tmp/install-ollama.sh \
+      && sh /tmp/install-ollama.sh \
+      && rm /tmp/install-ollama.sh; \
+    fi
+
+RUN set -e; \
+    if [ "${INCLUDE_OLLAMA}" = "true" ]; then \
+      ollama serve & \
+      OLLAMA_PID="$!"; \
+      until ollama list >/dev/null 2>&1; do sleep 1; done; \
+      ollama pull qwen3:4b; \
+      kill "${OLLAMA_PID}"; \
+    fi
 
 RUN ARCH=$(uname -m); \
   if [ "${ARCH}" = "x86_64" ]; then \
@@ -174,7 +198,7 @@ RUN useradd --no-log-init \
           ${USER_NAME} && \
   echo "${USER_NAME}:${PASSWORD}" | chpasswd
 
-EXPOSE 22 80 443 830 4000
+EXPOSE 22 80 443 830 4000 4001
 
 HEALTHCHECK --start-period=60s --interval=5s --retries=3 --timeout=5s CMD /opt/ncs/current/bin/ncs_cmd -c get_phase
 

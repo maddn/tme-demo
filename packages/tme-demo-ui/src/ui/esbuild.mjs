@@ -2,11 +2,13 @@ import * as esbuild from 'esbuild';
 
 await esbuild.build({
   entryPoints: [
+    'proxies/assistant-proxy.mjs',
     'proxies/ssh-proxy.mjs',
     'proxies/telnet-proxy.mjs'
   ],
   loader: {
-    '.node': 'file'
+    '.node': 'file',
+    '.txt': 'text'
   },
   outdir: '../../webui',
   platform: 'node',

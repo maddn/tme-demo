@@ -4,6 +4,8 @@ source /opt/ncs/current/ncsrc
 source /opt/ncs/installdirs
 source /etc/profile.d/jdk21.sh
 export NCS_CONFIG_DIR NCS_LOG_DIR NCS_RUN_DIR
+export OLLAMA_HOST=127.0.0.1:11434
+OLLAMA_PID=
 
 # install signal handlers
 trap sigint_handler INT
@@ -14,6 +16,7 @@ sigint_handler() {
     echo "run-nso.sh: received SIGINT, stopping NSO"
     ncs --stop
     stop_netsim
+    stop_ollama
     exit 130 # 128+2
 }
 
@@ -21,6 +24,7 @@ sigquit_handler() {
     echo "run-nso.sh: received SIGQUIT, stopping NSO"
     ncs --stop
     stop_netsim
+    stop_ollama
     exit 131 # 128+3
 }
 
@@ -28,12 +32,31 @@ sigterm_handler() {
     echo "run-nso.sh: received SIGTERM, stopping NSO"
     ncs --stop
     stop_netsim
+    stop_ollama
     exit 143 # 128+15
 }
 
 stop_netsim() {
   if [ -d ${NCS_RUN_DIR}/netsim ]; then
     ncs-netsim --dir ${NCS_RUN_DIR}/netsim stop
+  fi
+}
+
+start_ollama() {
+  if ! command -v ollama >/dev/null 2>&1; then
+    return
+  fi
+
+  echo "run-nso.sh: starting Ollama"
+  nohup ollama serve > /tmp/ollama.out 2>&1 &
+  OLLAMA_PID="$!"
+}
+
+stop_ollama() {
+  if [ -n "${OLLAMA_PID}" ] && kill -s 0 "${OLLAMA_PID}" >/dev/null 2>&1; then
+    echo "run-nso.sh: stopping Ollama"
+    kill "${OLLAMA_PID}"
+    wait "${OLLAMA_PID}" >/dev/null 2>&1 || true
   fi
 }
 
@@ -48,6 +71,9 @@ syslog-ng --no-caps
 
 # start SSH service so logs can be accessed easily
 service ssh start
+
+# start Ollama for the MCP assistant local model
+start_ollama
 
 # pre-start scripts
 for file in $(ls /etc/ncs/pre-ncs-start.d/*.sh 2>/dev/null); do

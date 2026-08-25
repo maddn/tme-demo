@@ -33,6 +33,15 @@ if [ "${KEEP_PORTS}" != "true" ]; then
                $CONF_FILE
 fi
 
+# allow generic RESTCONF paths without module prefixes
+xmlstarlet edit --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
+           --subnode '/x:ncs-config/x:restconf' --type elem --name require-module-name \
+           $CONF_FILE
+xmlstarlet edit --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
+           --subnode '/x:ncs-config/x:restconf/x:require-module-name' \
+           --type elem --name enabled --value 'false' \
+           $CONF_FILE
+
 # switch to local auth per default
 xmlstarlet edit --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
            --update '/x:ncs-config/x:aaa/x:pam/x:enabled' --value 'false' \
