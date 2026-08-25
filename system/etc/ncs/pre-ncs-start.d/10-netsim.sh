@@ -36,4 +36,34 @@ cp ${NETSIM_DATA_DIR}/spine1.xml netsim/spine/spine1/cdb
 cp ${NETSIM_DATA_DIR}/spine2.xml netsim/spine/spine2/cdb
 cp ${NETSIM_DATA_DIR}/spine3.xml netsim/spine/spine3/cdb
 
+set_ios_aaa_prompts() {
+  file="$1"
+
+  [ -f "$file" ] || return
+
+  device=$(basename "$(dirname "$(dirname "$file")")")
+  prompt0="        <prompt>${device}> </prompt>"
+  prompt15="        <prompt>${device}# </prompt>"
+
+  awk -v prompt0="$prompt0" -v prompt15="$prompt15" '
+    /<prompt>.*<\/prompt>/ {
+      if (prompt_count == 0) {
+        print prompt0
+        prompt_count++
+        next
+      }
+      if (prompt_count == 1) {
+        print prompt15
+        prompt_count++
+        next
+      }
+    }
+    { print }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+}
+
+for file in netsim/*/*/cdb/ios.xml; do
+  set_ios_aaa_prompts "$(dirname "$file")/aaa_init.xml"
+done
+
 ncs-netsim ncs-xml-init > ${CDB_DIR_NAME}/netsim-devices-init.xml
