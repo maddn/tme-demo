@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <aaa xmlns="http://tail-f.com/ns/aaa/1.1">
+    <authentication>
+      <users>
+        <user>
+          <name>acme</name>
+          <uid>65534</uid>
+          <gid>65534</gid>
+          <password>acme</password>
+          <ssh_keydir>/var/ncs/homes/acme/.ssh</ssh_keydir>
+          <homedir>/var/ncs/homes/acme</homedir>
+        </user>
+        <user>
+          <name>cyberdyne</name>
+          <uid>65534</uid>
+          <gid>65534</gid>
+          <password>cyberdyne</password>
+          <ssh_keydir>/var/ncs/homes/cyberdyne/.ssh</ssh_keydir>
+          <homedir>/var/ncs/homes/cyberdyne</homedir>
+        </user>
+        <user>
+          <name>stark</name>
+          <uid>65534</uid>
+          <gid>65534</gid>
+          <password>stark</password>
+          <ssh_keydir>/var/ncs/homes/stark/.ssh</ssh_keydir>
+          <homedir>/var/ncs/homes/stark</homedir>
+        </user>
+      </users>
+    </authentication>
+  </aaa>
+
+  <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+    <groups>
+      <group>
+        <name>tenant-acme</name>
+        <user-name>acme</user-name>
+      </group>
+      <group>
+        <name>tenant-cyberdyne</name>
+        <user-name>cyberdyne</user-name>
+      </group>
+      <group>
+        <name>tenant-stark</name>
+        <user-name>stark</user-name>
+      </group>
+    </groups>
+  </nacm>
+</config>

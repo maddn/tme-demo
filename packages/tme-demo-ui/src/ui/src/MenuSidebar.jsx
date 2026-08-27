@@ -11,6 +11,7 @@ import { topologyToggled,
 import * as Tenant from './Tenant';
 import * as Vpn from './Vpn';
 import * as DataCentre from './DataCentre';
+import TenantAccessControl from './TenantAccessControl';
 
 const demoTopology = '/topologies/topology{demo}';
 
@@ -28,7 +29,7 @@ function MenuSidebar() {
   }, [ dispatch, openTopology ]);
 
   return (
-    <SidebarPane>
+    <SidebarPane footer={<TenantAccessControl />}>
       <NodeListWrapper
         title="Tenants"
         label={Tenant.label}

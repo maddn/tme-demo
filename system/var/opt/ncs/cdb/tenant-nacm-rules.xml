@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+    <rule-list>
+      <name>tenant-acme-access</name>
+      <group>tenant-acme</group>
+      <rule>
+        <name>permit-own-tenant</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant[tme-demo:name='ACME']</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>permit</action>
+      </rule>
+      <rule>
+        <name>deny-other-tenants</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>deny</action>
+      </rule>
+    </rule-list>
+
+    <rule-list>
+      <name>tenant-cyberdyne-access</name>
+      <group>tenant-cyberdyne</group>
+      <rule>
+        <name>permit-own-tenant</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant[tme-demo:name='Cyberdyne']</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>permit</action>
+      </rule>
+      <rule>
+        <name>deny-other-tenants</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>deny</action>
+      </rule>
+    </rule-list>
+
+    <rule-list>
+      <name>tenant-stark-access</name>
+      <group>tenant-stark</group>
+      <rule>
+        <name>permit-own-tenant</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant[tme-demo:name='STARK']</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>permit</action>
+      </rule>
+      <rule>
+        <name>deny-other-tenants</name>
+        <path xmlns:tme-demo="http://example.com/tme-demo">/tme-demo:tme-demo/tme-demo:tenant</path>
+        <access-operations>create read update delete exec</access-operations>
+        <action>deny</action>
+      </rule>
+    </rule-list>
+  </nacm>
+</config>
