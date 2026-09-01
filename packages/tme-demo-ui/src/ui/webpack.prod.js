@@ -1,6 +1,7 @@
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path');
 
 module.exports = {
   entry: [
@@ -56,6 +57,7 @@ module.exports = {
   },
   resolve: {
     symlinks: false,
+    modules: [ path.resolve(__dirname, 'webui'), 'node_modules' ],
     extensions: ['', '.js', '.jsx']
   }
 };

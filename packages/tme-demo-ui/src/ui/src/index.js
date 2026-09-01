@@ -28,7 +28,7 @@ ReactDOM.render(
 );
 
 if (module.hot) {
-  module.hot.accept('api', () =>
-      store.replaceReducer(require('api').default)
+  module.hot.accept('app/store', () =>
+      store.replaceReducer(require('app/store').rootReducer)
   );
 }
