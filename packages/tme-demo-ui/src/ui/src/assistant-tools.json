@@ -13,19 +13,20 @@
         },
         "l3vpn": {
           "type": "object",
-          "description": "Layer3 VPN settings for this tenant.",
+          "required": [],
+          "description": "Optional. Include only for L3VPN service changes.",
           "properties": {
             "route-distinguisher": {
               "type": "integer",
-              "description": "Route distinguisher/target identifier for the tenant VPN."
+              "description": "Optional. Include only when setting or changing the route distinguisher/target identifier."
             },
             "qos-policy": {
               "type": "string",
-              "description": "VPN QoS policy."
+              "description": "Optional. Include only when setting or changing the VPN QoS policy."
             },
             "endpoint": {
               "type": "array",
-              "description": "VPN endpoints/sites to add or update.",
+              "description": "Optional. Include only VPN endpoints/sites to add or update.",
               "items": {
                 "type": "object",
                 "required": [
@@ -43,19 +44,19 @@
                   },
                   "ce-interface": {
                     "type": "string",
-                    "description": "CE local GigabitEthernet interface."
+                    "description": "Optional. Include only when setting or changing the CE local interface."
                   },
                   "ip-network": {
                     "type": "string",
-                    "description": "CE interface private IPv4 prefix."
+                    "description": "Optional. Include only when setting or changing the CE interface private IPv4 prefix."
                   },
                   "as-number": {
                     "type": "integer",
-                    "description": "CE device AS number."
+                    "description": "Optional. Include only when setting or changing the CE device AS number."
                   },
                   "bandwidth": {
                     "type": "integer",
-                    "description": "Endpoint bandwidth in bps."
+                    "description": "Optional. Include only when setting or changing endpoint bandwidth in bps."
                   }
                 }
               }
@@ -64,23 +65,24 @@
         },
         "data-centre": {
           "type": "object",
-          "description": "Data centre connectivity settings for this tenant.",
+          "required": [],
+          "description": "Optional. Include only for data centre connectivity changes.",
           "properties": {
             "vlan": {
               "type": "integer",
-              "description": "Data centre tenant VLAN."
+              "description": "Optional. Include only when setting or changing the data centre tenant VLAN."
             },
             "ip-network": {
               "type": "string",
-              "description": "Private IPv4 prefix for the data centre service."
+              "description": "Optional. Include only when setting or changing the data centre private IPv4 prefix."
             },
             "preserve-vlan-tags": {
               "type": "boolean",
-              "description": "Preserve VLAN tags."
+              "description": "Optional. Include only when setting or changing VLAN tag preservation."
             },
             "endpoint": {
               "type": "array",
-              "description": "Data centre endpoints to add or update.",
+              "description": "Optional. Include only data centre endpoints to add or update.",
               "items": {
                 "type": "object",
                 "required": [
@@ -105,7 +107,7 @@
                   },
                   "connect-multiple-vlans": {
                     "type": "boolean",
-                    "description": "Make the access port a trunk."
+                    "description": "Optional. Include only when setting or changing access port trunking."
                   }
                 }
               }
@@ -114,7 +116,7 @@
         },
         "__commit_dry_run": {
           "type": "boolean",
-          "description": "Preview the tenant update without applying it."
+          "description": "Optional. Set to true when the user asks to preview the tenant update without applying it."
         },
         "__commit_dry_run_format": {
           "type": "string",
@@ -123,7 +125,7 @@
             "xml",
             "native"
           ],
-          "description": "Output format for commit dry-run results."
+          "description": "Optional. Output format for commit dry-run results."
         }
       }
     }
@@ -142,7 +144,8 @@
         },
         "dry-run": {
           "type": "object",
-          "description": "Preview the redeploy without applying it. Use an empty object unless a dry-run output format is explicitly requested.",
+          "required": [],
+          "description": "Optional. Include when the user asks to preview the redeploy without applying it. Use an empty object unless a dry-run output format is explicitly requested.",
           "properties": {
             "outformat": {
               "type": "string",
@@ -152,33 +155,34 @@
                 "xml",
                 "cli"
               ],
-              "description": "Dry-run output format. Only include when the user explicitly asks for a specific format."
+              "description": "Optional. Dry-run output format. Only include when the user explicitly asks for a specific format."
             },
             "with-service-meta-data": {
               "type": "boolean",
-              "description": "Include service metadata in dry-run output."
+              "description": "Optional. Include only when the user asks for service metadata in dry-run output."
             }
           }
         },
         "reconcile": {
           "type": "object",
-          "description": "Reconcile service ownership of existing device configuration.",
+          "required": [],
+          "description": "Optional. Include only when the user asks to reconcile service ownership of existing device configuration.",
           "properties": {
             "attach-non-service-config": {
               "type": "boolean",
-              "description": "Attach existing non-service configuration to the service."
+              "description": "Optional. Attach existing non-service configuration to the service."
             },
             "detach-non-service-config": {
               "type": "boolean",
-              "description": "Detach non-service configuration from the service."
+              "description": "Optional. Detach non-service configuration from the service."
             },
             "keep-non-service-config": {
               "type": "boolean",
-              "description": "Keep existing non-service configuration."
+              "description": "Optional. Keep existing non-service configuration."
             },
             "discard-non-service-config": {
               "type": "boolean",
-              "description": "Discard existing non-service configuration."
+              "description": "Optional. Discard existing non-service configuration."
             }
           }
         }

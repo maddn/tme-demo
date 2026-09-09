@@ -21,7 +21,7 @@ export const SERVICE_SCHEMAS = [
     path: '/tme-demo:tme-demo/tenant',
     keyName: '__key__tenant__name',
     selectionSource: 'context',
-    attachToChat: true,
+    includeInChat: true,
     toolPrefix: 'tme_demo_tme_demo_tenant'
   },
   { label: 'L3VPN',
@@ -43,14 +43,23 @@ export const SERVICE_SCHEMAS = [
 export const SUGGESTED_MESSAGE_GROUPS = [
   {
     note: 'Select a tenant in the sidebar first so the assistant receives ' +
-      'the tenant resource.',
+      'the tenant context.',
     messages: [
-      'Which tenant am I working on?',
+      {
+        text: 'Which tenant am I working on?',
+        includeResource: false
+      },
       'What L3VPN endpoints are configured for this tenant?',
       'Check all VPN endpoint devices are in sync',
-      'Add a VPN endpoint called London using ce2',
-      'Add a VPN endpoint called Paris using ce3 with 20 Mbps bandwidth ' +
-        'and choose a valid IP network',
+      {
+        text: 'Add a VPN endpoint called London using ce2 interface 0/1',
+        includeResource: false
+      },
+      {
+        text: 'Add a VPN endpoint called Paris using ce3 interface 0/1 with ' +
+          '20 Mbps bandwidth and choose any IP network',
+        includeResource: false
+      },
       'Update the bandwidth for all VPN endpoints to 20 Mbps and preview ' +
         'the changes'
     ]
@@ -59,7 +68,10 @@ export const SUGGESTED_MESSAGE_GROUPS = [
     note: 'Clear the tenant selection first so the assistant uses the ' +
       'tenant named in the message.',
     messages: [
-      'Redeploy tenant STARK'
+      {
+        text: 'Redeploy tenant STARK',
+        includeResource: false
+      }
     ]
   }
 ];
