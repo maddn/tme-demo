@@ -109,7 +109,7 @@ export function Component({ name }) {
       serviceKeypath={serviceKeypath}
       parentServiceKeypath={stacked ? tenantKeypath(name) : undefined}
       disableRedeploy={true}
-      disableDelete={true}
+      disableDelete={!stacked}
       { ...swapLabels(data,
         stacked ? stackedSelection : serviceSelection) }
     >
