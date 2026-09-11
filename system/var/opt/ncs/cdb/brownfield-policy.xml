@@ -1,0 +1,33 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <services xmlns="http://tail-f.com/ns/ncs">
+    <out-of-band>
+      <policy>
+        <servicepoint>connectivity-servicepoint</servicepoint>
+
+        <rule>
+          <label>restore-service-leaves</label>
+          <path>ios:interface/GigabitEthernet</path>
+          <filter-expr>oob:is-leaf() and oob:is-service-data()</filter-expr>
+          <priority>10</priority>
+          <default-action>sync-to-device</default-action>
+        </rule>
+
+        <rule>
+          <label>adopt-service-subtree-leaves</label>
+          <path>ios:interface/GigabitEthernet</path>
+          <filter-expr>oob:is-leaf() and oob:is-service-data(oob:rule-paths())</filter-expr>
+          <priority>20</priority>
+          <default-action>manage-by-service</default-action>
+        </rule>
+
+        <rule>
+          <label>sync-unmanaged-leaves</label>
+          <path>ios:interface/GigabitEthernet</path>
+          <filter-expr>oob:is-leaf()</filter-expr>
+          <priority>30</priority>
+          <default-action>sync-from-device</default-action>
+        </rule>
+      </policy>
+    </out-of-band>
+  </services>
+</config>
