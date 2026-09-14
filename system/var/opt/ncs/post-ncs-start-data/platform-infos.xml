@@ -97,6 +97,38 @@
       </platform>
     </device>
     <device>
+      <name>p0</name>
+      <platform>
+        <name>Cisco IOS-XR</name>
+        <version>3.5</version>
+        <model>NETSIM</model>
+      </platform>
+    </device>
+    <device>
+      <name>p1</name>
+      <platform>
+        <name>Cisco IOS-XR</name>
+        <version>3.5</version>
+        <model>NETSIM</model>
+      </platform>
+    </device>
+    <device>
+      <name>p2</name>
+      <platform>
+        <name>Cisco IOS-XR</name>
+        <version>3.5</version>
+        <model>NETSIM</model>
+      </platform>
+    </device>
+    <device>
+      <name>p3</name>
+      <platform>
+        <name>Cisco IOS-XR</name>
+        <version>3.5</version>
+        <model>NETSIM</model>
+      </platform>
+    </device>
+    <device>
       <name>pe0</name>
       <platform>
         <name>Cisco IOS-XR</name>
