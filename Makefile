@@ -187,7 +187,7 @@ clean-docs:
 
 CNT_NAME = tme-demo
 IMAGE_NAME = tme-demo
-
+DOCKER_BIND_IP ?= 0.0.0.0
 nso_install_file = $(wildcard nso-install-file/nso-*.linux.*.installer.bin)
 
 docker-build:
@@ -199,6 +199,9 @@ docker-build:
 	docker build --build-arg NSO_INSTALL_FILE=$(nso_install_file) --target nso-run -t $(IMAGE_NAME) .
 
 docker-start: docker-run docker-wait-started
+
+docker-start-localhost: DOCKER_BIND_IP = 127.0.0.1
+docker-start-localhost: docker-start
 
 docker-test: IMAGE_NAME = tme-demo-build
 docker-test: docker-run docker-wait-started
@@ -216,7 +219,14 @@ docker-shell:
 
 
 docker-run:
-	docker run -p 22:22/tcp -p 80:80/tcp -p 443:443/tcp -p 830:830/tcp -p 4000:4000/tcp -p 4001:4001/tcp --name $(CNT_NAME) -td $(IMAGE_NAME)
+	docker run \
+	  -p $(DOCKER_BIND_IP):22:22/tcp \
+	  -p $(DOCKER_BIND_IP):80:80/tcp \
+	  -p $(DOCKER_BIND_IP):443:443/tcp \
+	  -p $(DOCKER_BIND_IP):830:830/tcp \
+	  -p $(DOCKER_BIND_IP):4000:4000/tcp \
+	  -p $(DOCKER_BIND_IP):4001:4001/tcp \
+	  --name $(CNT_NAME) -td $(IMAGE_NAME)
 
 docker-wait-started:
 	@docker logs -f $(CNT_NAME) & LOGS_PID="$$!"; \
@@ -225,7 +235,7 @@ docker-wait-started:
 	done; \
 	kill $${LOGS_PID}
 
-.PHONY: docker-build docker-start docker-test docker-stop docker-shell docker-run docker-wait-started
+.PHONY: docker-build docker-start docker-start-localhost docker-test docker-stop docker-shell docker-run docker-wait-started
 
 
 # PACKAGE COMPILATION

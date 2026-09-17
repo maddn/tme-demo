@@ -233,6 +233,51 @@ Use the `stop` make target to stop NSO and the NETSIM environment.
 make stop
 ```
 
+## Docker Container
+
+The demo can also be built and run as a Docker container. The Docker image
+installs NSO, builds the demo packages, starts NSO and NETSIM, starts the UI
+proxies, and includes Ollama with the default assistant model.
+
+Copy the NSO installer binary into the `nso-install-file` directory before
+building:
+
+```text
+cp nso-6.7.linux.<arch>.installer.bin nso-install-file/
+make docker-build
+```
+
+Start the container with:
+
+```text
+make docker-start
+```
+
+By default, `make docker-start` publishes the NSO and proxy ports on all host
+interfaces. For local-only access, use:
+
+```text
+make docker-start-localhost
+```
+
+After startup, open the NSO Web UI at `http://localhost/` when accessing the
+container from the same machine. If the container was started on a remote host,
+use that host's address instead. The NSO Web UI is available on standard HTTP
+port `80`, and SSH access to the container is available on standard SSH port
+`22`.
+
+A shell inside the running container can be opened with:
+
+```text
+make docker-shell
+```
+
+Stop and remove the container with:
+
+```text
+make docker-stop
+```
+
 # Demo Devices
 
 The demo uses the following simulated devices.
