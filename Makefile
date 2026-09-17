@@ -43,7 +43,7 @@
 all: packages ncs-cdb netsim
 .PHONY: all
 
-clean: clean-packages clean-cdb clean-netsim
+clean: clean-packages clean-cdb clean-netsim clean-docs
 .PHONY: clean
 
 start: start-netsim start-ncs post-ncs-start-data start-ssh-proxy start-assistant-proxy
@@ -130,6 +130,37 @@ dist: stop clean
 	  $(demo_dir); \
 	gzip -9 $(demo_dir).tar
 .PHONY: dist
+
+
+DCLOUD_GUIDE = docs/dcloud-guide
+DCLOUD_GUIDE_TITLE = Cisco NSO Core Features Demo
+DCLOUD_GUIDE_SOURCES = README.md $(DCLOUD_GUIDE).md \
+	$(DCLOUD_GUIDE).css $(wildcard docs/screenshots/*.png)
+BROWSER ?= google-chrome-stable
+
+$(DCLOUD_GUIDE).html: $(DCLOUD_GUIDE_SOURCES)
+	@{ \
+	  cat $(DCLOUD_GUIDE).md; \
+	  printf '\n'; \
+	  awk ' \
+	    /^# Getting Started$$/ { skip = 1; next } \
+	    /^# Demo Devices$$/ { skip = 0 } \
+	    !skip { print } \
+	  ' README.md | sed -E 's/^(#{1,5} )/#\1/'; \
+	} | pandoc --from=gfm --to=html5 --standalone --embed-resources \
+	  --metadata title="$(DCLOUD_GUIDE_TITLE)" \
+	  --metadata pagetitle="$(DCLOUD_GUIDE_TITLE)" \
+	  --resource-path=. --css $(DCLOUD_GUIDE).css \
+	  --toc --toc-depth=3 - -o $@
+
+$(DCLOUD_GUIDE).pdf: $(DCLOUD_GUIDE).html
+	$(BROWSER) --headless --disable-gpu --no-sandbox \
+	  --no-pdf-header-footer \
+	  --print-to-pdf=$(abspath $@) file://$(abspath $<)
+
+clean-docs:
+	rm -f $(DCLOUD_GUIDE).html $(DCLOUD_GUIDE).pdf
+.PHONY: clean-docs
 
 
 # DOCKER INSTALL

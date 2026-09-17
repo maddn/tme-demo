@@ -9,33 +9,31 @@ operations, and brownfield protection.
 
 The demo uses a top-level hybrid service called `tenant`. Each tenant can have
 VPN endpoints and data-centre connectivity. These are configured using the
-`l3vpn` package from the `mpls-vpn` standard example and the `datacenter`
-example package.
+`l3vpn` service from the `mpls-vpn` example and the `connectivity` service from
+the `datacenter` example.
 
-VPN endpoints are added by choosing a CE device. NSO automatically configures
-both the CE and PE devices. The generated configuration includes:
+The walkthrough demonstrates two service domains:
 
-- customer-facing CE interfaces
-- PE VRFs
-- VLAN, IP address, and traffic shaping on CE/PE interfaces
-- BGP as the CE/PE routing protocol
-- QoS configuration from the policies and classes defined in NSO
+- VPN endpoints are added by choosing a CE device. NSO uses topology data to
+  find the connected PE and generates CE interface configuration, PE VRFs,
+  VLAN/IP addressing, BGP, traffic shaping, and QoS configuration.
+- Data-centre endpoints are added by choosing a switch access port. NSO
+  provisions the tenant VLAN on the access switch, shared spine/fabric
+  configuration, and optional DCI/core configuration when the VLAN is extended
+  between data centres.
 
-The demo uses the following device types:
-
-- Cisco IOS
-- Cisco IOS-XR
-- Cisco NX
-- Juniper Junos
-- Nokia ALU-SR
+The demo uses simulated devices created with NSO's `netsim` tool.
 
 # Topology UI
 
-The topology UI displays devices from NSO's `device-list` in a graphical
-topology, using connection, layout, and icon-position data from the demo's
-pre-seeded `topology` model. The left sidebar displays tenant services and
-tenant-scoped service data. The right sidebar can show the *Config Viewer*, the
-*MCP Explorer*, or be hidden.
+The topology UI is a custom Web UI extension built for this demo. It displays
+devices from NSO's `device-list` in a graphical topology, using connection,
+layout, and icon-position data from the demo's pre-seeded `topology` model.
+This same information can be displayed in the standard Web UI, CLI or any of
+the northbound interfaces.
+
+The left sidebar displays tenant services and tenant-scoped service data. The
+right sidebar can show the *Config Viewer*, the *MCP Explorer*, or be hidden.
 
 ## Displaying The UI
 
@@ -235,27 +233,49 @@ Use the `stop` make target to stop NSO and the NETSIM environment.
 make stop
 ```
 
+# Demo Devices
+
+The demo uses the following simulated devices.
+
+| Devices | Simulated platform | Role |
+| --- | --- | --- |
+| `ce0`-`ce7` | Cisco IOS | Customer edge devices |
+| `pe0`-`pe1` | Cisco IOS-XR | Provider edge devices |
+| `pe2` | Juniper Junos | Provider edge device |
+| `pe3` | Nokia TiMOS | Provider edge device |
+| `p0`-`p3` | Cisco IOS-XR | Provider core devices |
+| `dci0`-`dci3` | Cisco IOS-XR | Data-centre interconnect devices |
+| `spine0`-`spine3` | Cisco NX | Data-centre spine devices |
+| `sw0`-`sw1`, `sw3`-`sw4` | Cisco IOS | Data-centre access switches |
+| `sw2`, `sw5` | Dell FTOS | Data-centre access switches |
+
 # Demo Walkthrough
 
-Sections marked optional can be skipped. The `MCP Required` column indicates
-whether the section requires the MCP server, has an optional MCP variant, or
-does not use MCP.
+The walkthrough assumes the demo is in a clean starting state.
 
-| Section | Title | Optional | MCP Required |
+The *Depends on* column lists the earlier walkthrough state assumed by each
+section. The *MCP Required* column indicates whether the section requires MCP,
+has an optional MCP variant, or does not use MCP.
+
+| Section | Title | Depends on | MCP Required |
 | --- | --- | --- | --- |
-| 1 | NSO Web UI Baseline | No | No |
-| 2 | Topology UI Overview | No | No |
-| 3 | Access Control Overview | Yes | No |
-| 4 | MCP Explorer Overview | Yes | Yes |
-| 5 | Out-of-Band Drift Detection | Yes | Optional |
-| 6 | Service Creation | No | No |
-| 7 | MCP Service Operations | Yes | Yes |
-| 8 | Service Modification | No | Optional |
-| 9 | Service Repair | No | Optional |
-| 10 | NACM Enforcement with MCP | Yes | Yes |
-| 11 | Brownfield Protection Flow | Yes | No |
+| 1 | NSO Web UI Baseline | - | No |
+| 2 | Topology UI Overview | 1 | No |
+| 3 | Access Control Overview | 2 | No |
+| 4 | MCP Explorer Overview | 2 | Yes |
+| 5 | Out-of-Band Drift Detection | 2 | Optional |
+| 6 | Service Creation | 2 | No |
+| 7 | MCP Service Operations | 4, 6 | Yes |
+| 8 | Service Modification | 6 | Optional |
+| 9 | Service Repair | 6 | Optional |
+| 10 | NACM Enforcement with MCP | 3, 7 | Yes |
+| 11 | Shared Configuration Ownership | 2 | No |
+| 12 | Brownfield Protection Flow | 11 | No |
 
 ## 1. NSO Web UI Baseline
+
+This section introduces the standard NSO Web UI before opening the custom
+topology UI.
 
 1. Open the NSO Web UI and log in as `admin`.
 
@@ -263,6 +283,8 @@ does not use MCP.
    to the standard NSO views, custom Web UI extension packages are shown in the
    *Packages* section. The custom topology UI for this demo will be accessed
    from here in a later step.
+
+   ![NSO Home shortcut](docs/screenshots/nso-home-packages.png)
 
 3. Click the *Device Management* shortcut to navigate to the *Device Management*
    view. Set the *Rows per page* dropdown to `50` so all devices are visible on
@@ -286,6 +308,8 @@ does not use MCP.
    and port to connect to each device. Note the different device types shown in
    the platform column.
 
+   ![Device platforms](docs/screenshots/nso-device-management.png)
+
 5. Select the checkbox in the table header to select all devices, and then from
    the *Choose actions* dropdown that appears, select *Sync from*. Observe that
    NSO synchronises the configuration from each device successfully.
@@ -308,10 +332,10 @@ does not use MCP.
 8. Using the navigation sidebar on the left, select *Home* to return to the
    home screen.
 
-Expected observation: the audience sees this is a normal NSO system first, and
-the topology UI is layered on top rather than replacing NSO.
-
 ## 2. Topology UI Overview
+
+This section introduces the custom topology UI and shows how it presents normal
+NSO data in a topology-oriented workflow.
 
 From the NSO *Home* screen, open the topology UI from the *Packages* section by
 clicking the `tme-demo-ui` shortcut.
@@ -321,6 +345,13 @@ clicking the `tme-demo-ui` shortcut.
 1. Show the topology canvas and explain that the seeded demo topology is
    displayed. The topology gives the operator a visual context for the same
    devices and services that can also be managed from the standard NSO views.
+
+   Point out the main domains: customer devices in the branch area, PE/P
+   devices in the transport area, and switching/fabric devices in the
+   data-centre area. The topology shows the relationships that the services use
+   when calculating device configuration.
+
+   ![Topology overview](docs/screenshots/topology-overview.png)
 
 2. Use the *Icon Size* slider to set an icon size that works well for the demo
    screen. This is a useful first adjustment because the best icon size depends
@@ -335,6 +366,8 @@ clicking the `tme-demo-ui` shortcut.
    - transport devices are blue router icons
    - customer devices are brown router icons
    - data-centre devices are green switch icons
+
+   ![Topology underlay](docs/screenshots/topology-underlay.png)
 
 4. Hover over `pe0`, `pe3`, and `pe2` and note the different vendor
    platforms:
@@ -359,6 +392,8 @@ clicking the `tme-demo-ui` shortcut.
    are made, this is a useful baseline view; later in the demo, service-owned
    configuration will be highlighted and annotated here.
 
+   ![Config Viewer baseline](docs/screenshots/config-viewer-baseline.png)
+
 3. In the header of the `pe0` item in the *Config Viewer*, point out the
    buttons that can open the device in the *Configuration Editor* (useful for
    running device actions) or connect directly to the device console. Briefly
@@ -370,12 +405,14 @@ clicking the `tme-demo-ui` shortcut.
 ### 2.3 Tenant Sidebar
 
 1. In the *Tenant* sidebar on the left, select the `ACME` tenant. Selecting a
-   tenant switches the context for the *Managed VPNs* and *Data Centre*
-   selections below, only showing the services for the selected tenant.
+   tenant switches the sidebar context for the *Managed VPNs* and *Data
+   Centre* service views below, only showing the services for the selected
+   tenant.
 
-   For advanced audiences, optionally explain that this is implemented as a
-   stacked service where the top-level `tme-demo:tenant` service creates and
-   owns the lower-level `l3vpn` and `datacenter` services.
+   For advanced audiences, explain that the tenant is a stacked service. The
+   top-level `tme-demo:tenant` service provides a customer-focused input model,
+   then creates and owns the lower-level `l3vpn` and `datacenter` services
+   that generate device configuration.
 
 2. Expand the `VPN ACME` item under the *Managed VPNs* section and then the
    `VLAN 501` item under the *Data Centre* section. Observe this
@@ -383,11 +420,11 @@ clicking the `tme-demo-ui` shortcut.
    directly to the YANG model and uses NSO services underneath. Changes made
    here are still normal NSO transaction changes.
 
-Expected observation: the audience sees the topology UI as a topology-oriented
-view of normal NSO data. Selecting a tenant scopes the service sidebar,
-and selecting a device drives the *Config Viewer*.
 
-## 3. Optional Access Control Overview
+## 3. Access Control Overview
+
+This section introduces the tenant access-control rules before showing how they
+can be used to restrict visibility of other tenants for a tenant user.
 
 1. In the *Tenant* sidebar, show that the current `admin` user can
    see the seeded tenants:
@@ -422,6 +459,8 @@ and selecting a device drives the *Config Viewer*.
    rule-list and observing the access operations (including read) that are
    denied by the rules.
 
+   ![Access Control panel](docs/screenshots/access-control-panel.png)
+
 3. Log out of NSO using the *Log out* button in the
    user menu on the right of the header. Then log back in as the `acme` user
    (password: `acme`).
@@ -434,7 +473,10 @@ and selecting a device drives the *Config Viewer*.
 
    Continue the demo as the `acme` user.
 
-## 4. Optional MCP Explorer Overview
+## 4. MCP Explorer Overview
+
+This section introduces the MCP Explorer and the capabilities currently
+advertised by the NSO Adaptive MCP server.
 
 The NSO Adaptive MCP server discovers the services, actions, devices, resources,
 and prompts available in the running NSO system. For each service type loaded
@@ -458,9 +500,11 @@ and prompt without demo-specific grouping.
    capabilities.
 
 2. Select *Curated View* and browse the top-level sections. At this point the
-   server is using the default `restricted` policy, so only the default read,
-   device, and system capabilities are advertised. This is why no *Service
-   Tools* are currently displayed.
+   server is using the default `restricted` policy, which limits the advertised
+   tools to the default read and device tools. This is why no *Service Tools* are
+   currently displayed.
+
+   ![MCP Explorer curated view](docs/screenshots/mcp-explorer-curated.png)
 
 3. In the *MCP Server* section, expand the *Policies* item and observe that the
    default policy is `restricted` and no policy rules exist.
@@ -478,7 +522,10 @@ and prompt without demo-specific grouping.
 6. Switch to *Raw View* and show the ungrouped MCP tools and resources
    advertised by the MCP server using the default restricted policy.
 
-## 5. Optional Out-of-Band Drift Detection
+## 5. Out-of-Band Drift Detection
+
+This section demonstrates how NSO detects and reconciles direct device changes
+made outside NSO.
 
 1. Select `ce0` in the topology and set the *Inspection Pane* to *Config*.
 
@@ -497,6 +544,8 @@ and prompt without demo-specific grouping.
    ce0> enable
    ce0# show running-config
    ```
+
+   ![Console Viewer](docs/screenshots/console-viewer.png)
 
 4. Enter configuration mode, make a small out-of-band change, and close the
    connection:
@@ -555,6 +604,11 @@ and prompt without demo-specific grouping.
 
 ## 6. Service Creation
 
+This section demonstrates service intent being translated into device
+configuration across multiple domains and vendors. The presenter only supplies
+VPN endpoint intent; NSO uses the service model, topology data, and NEDs to
+calculate the required CE and PE device changes.
+
 ### 6.1 VPN Endpoint Creation
 
 1. With `ACME` selected in the *Tenant* sidebar, expand `VPN ACME` below the
@@ -564,14 +618,32 @@ and prompt without demo-specific grouping.
 
 2. Drag the `ce1` device icon from the topology to the *VPN Endpoints* section
    in the sidebar. Enter the endpoint name `Madrid` in the pop-up field and
-   click the `>` button. The newly created VPN endpoint is displayed in the NSO
+   click the `>` button.
+
+   ![VPN endpoint editor](docs/screenshots/vpn-endpoint-creation.png)
+
+   The newly created VPN endpoint is displayed in the NSO
    *Configuration Editor*. Set `ce-interface` to `0/1`. The other fields can be
-   updated or left as default. Press the browser back button to return to the
-   topology UI.
+   updated or left as default.
+
+   Optionally demonstrate YANG validation by entering an invalid value in
+   `as-number`, such as `70000`. NSO rejects the value because the service model
+   restricts the field to the range `0..65535`. This range is defined in the
+   `tme-demo` service YANG model.
+
+   ![VPN endpoint editor](docs/screenshots/vpn-endpoint-editor.png)
+
+   Restore the default value before continuing by pressing the small `x` icon on
+   the right side of the textbox.
+
+   Point out that the selected CE device is prepopulated from the drag
+   operation, while the service supplies defaults for the other endpoint inputs.
 
    - endpoint name: `Madrid`
    - device: `ce1`
    - interface: `0/1`
+
+   Press the browser back button to return to the topology UI.
 
 3. Drag the `ce4` device icon from the topology to the *VPN Endpoints* section
    in the sidebar. Enter the endpoint name `Berlin` in the pop-up field and
@@ -587,8 +659,8 @@ and prompt without demo-specific grouping.
 
 ### 6.2 Transaction Review and Commit
 
-> This dry-run review pattern is used again for later service updates and
-> service actions.
+> **Presenter note:** This dry-run review pattern is used again for later
+> service updates and service actions.
 
 1. Open the NSO *Transactions* view using the rocket icon in the header. Observe
    the pending service model changes in the transaction. These are the requested
@@ -603,16 +675,36 @@ and prompt without demo-specific grouping.
    changes in NSO's CDB format. NSO has taken the service intent and calculated
    the configuration changes required on each affected device.
 
+   Scroll to the bottom of the output to show the tenant and L3VPN service
+   model changes. The tenant changes are the compact service inputs entered by
+   the operator. The tenant service uses two lower-level services, `l3vpn` and
+   `datacenter`, to generate the required device configuration. The dry-run
+   shows the `vpn` service that will be created with the full set of inputs for
+   each endpoint.
+
+   ![Transaction dry-run output](docs/screenshots/transaction-dry-run-cli.png)
+
+   > **Presenter note:** In the first commit, the `datacenter` service is also
+   > created and can be seen in the dry-run output. This can be ignored; at this
+   > point there are no data-centre endpoints so no device configuration is
+   > generated.
+
+   Scroll above those entries to show the generated device model changes on the
+   CE and PE devices for the two VPN endpoints.
+
 4. Expand the *Commit settings* section again. Select *dry-run*, set *outformat*
    to `native`, and click the *Commit (Dry-run)* button. Explain that this
-   shows the native configuration that NSO will send to the devices.
+   shows the native configuration that NSO will send to the devices. The `cli`
+   dry-run was NSO's device model representation, whereas the `native` dry-run
+   is rendered through the device NEDs into the syntax each device understands.
 
-   For the initial service creation transaction, point out that NSO configures
-   both the CE devices and their connected PE devices. For example, `ce1` is
-   connected through `pe0` and `ce4` is connected through `pe2`. The native
-   dry-run output also shows the different device interfaces, such as Cisco
-   IOS-XR CLI for `pe0` and Juniper NETCONF XML for `pe2`. The dry-run gives
-   the operator a chance to inspect those changes before they are sent.
+   For this transaction, NSO configures both CE devices and their connected PE
+   devices. For example, `ce1` is connected through `pe0` and `ce4` is connected
+   through `pe2`, so the output includes both customer-edge and provider-edge
+   changes. The native output also shows different device interfaces: Cisco
+   IOS-XR devices receive CLI-style payloads, while the Juniper device receives
+   NETCONF XML. The dry-run gives the operator a chance to inspect those changes
+   before they are sent.
 
 5. Click the *Commit* button. NSO sends the changes to the affected devices.
    If a device update fails, NSO attempts to roll back changes already made to
@@ -620,19 +712,34 @@ and prompt without demo-specific grouping.
 
 ### 6.3 Configuration Ownership
 
+This section shows that NSO stores the intended device configuration in CDB and
+tracks which service owns each generated configuration node.
+
 1. Press the browser back button to return to the topology UI. Observe that the
    endpoint CE devices and connected PE devices are highlighted because they
    now have configuration that is owned by the currently selected `ACME` tenant
-   service.
+   service. If the expected highlights are not visible, refresh the browser
+   window and make sure `ACME` is still selected in the *Tenant* sidebar.
 
 2. Set the right *Inspection Pane* to *Config* and select `ce1` in the
    topology. Expand the `ce1` item in the *Config Viewer* and scroll through
-   the configuration. The configuration generated and owned by the service is
-   highlighted in blue. Click the `svc-meta` button to display the service
-   metadata annotations. Explain that NSO tracks each line of configuration
-   using backpointers to the service instance.
+   the configuration. Explain that the *Config Viewer* displays NSO's copy of
+   the device configuration from the CDB, not live output read directly from the
+   device. The part of the configuration generated and owned by the service is
+   highlighted in blue.
 
-## 7. Optional MCP Service Operations
+   ![Service metadata](docs/screenshots/config-viewer-service-meta.png)
+
+3. Click the `svc-meta` button to display the service metadata annotations.
+   The `backpointer` metadata identifies the service instance associated with the
+   configuration. The `refcount` metadata prevents NSO from removing shared
+   configuration; NSO only removes configuration that it fully owns and is no
+   longer referenced by any service.
+
+## 7. MCP Service Operations
+
+This section demonstrates an LLM assistant using the service tools advertised
+by the MCP server.
 
 ### 7.1 MCP Server Policies
 
@@ -665,10 +772,11 @@ and prompt without demo-specific grouping.
 2. Use the first five suggested messages to show how a typical assistant can
    use the MCP resources and tools advertised by the MCP server.
 
-   For each message, select the suggested message and press Enter. Explain that
-   the assistant is using small LLMs running locally and may take time to
-   generate responses. These models also have limited reasoning ability and may
-   not generate the expected response.
+   For each message, select the suggested message and press Enter.
+
+   > **Presenter note:** The assistant uses small LLMs running locally and may
+   > take time to generate responses. These models also have limited reasoning
+   > ability and may not generate the expected response.
 
    - **Which tenant am I working on?**<br/>
      Demonstrates the prerequisite context check that the assistant is aware of
@@ -690,7 +798,14 @@ and prompt without demo-specific grouping.
      Demonstrates a more in-depth service update using the advertised tool
      schema to generate the tool payload.
 
+   ![MCP Session output](docs/screenshots/mcp-session-output.png)
+
 ## 8. Service Modification
+
+This section shows how an existing service can be changed after deployment. The
+operator updates the service intent, and NSO recalculates the minimum device
+configuration changes needed to keep the deployed service aligned with that
+intent.
 
 > **MCP option available:** steps 1-4 can be replaced by the MCP preview variant
 > below. This demonstrates the assistant-generated service update and dry-run
@@ -704,11 +819,12 @@ and prompt without demo-specific grouping.
    `bandwidth` from the default `10000000` bps to `20000000` bps (20 Mbps).
 
 3. In the *Configuration Editor*, click the *Transactions* shortcut in the
-   sidebar and note the old and new values in the changes list. Use the same
-   dry-run review pattern from
-   [section 6.2](#62-transaction-review-and-commit) and point out that NSO has
-   calculated the minimal changes required to update the bandwidth, rather than
-   rewriting the whole service configuration.
+   sidebar and note the old and new service input values in the changes list.
+   Use the same dry-run review pattern from
+   [section 6.2](#62-transaction-review-and-commit) to compare the small
+   `bandwidth` change with the generated device model changes. Point out that
+   NSO has calculated the minimal changes required to update the bandwidth,
+   rather than rewriting the whole service configuration.
 
 4. Commit the transaction using the *Commit* button at the bottom of the
    *Commit changes* drawer. Press the browser back button to return to the
@@ -736,7 +852,9 @@ and prompt without demo-specific grouping.
 
 5. Optionally, update the tenant QoS policy to show a change that affects all
    endpoints. Click the *View Tenant in Configuration Editor* button on the
-   `ACME` tenant and change `l3vpn/qos-policy` from `GOLD` to `SILVER`.
+   `ACME` tenant and change `l3vpn/qos-policy` from `GOLD` to `SILVER`. This
+   tenant-level service input shows a broader service recalculation than the
+   single endpoint bandwidth change.
 
    Click the *Transactions* shortcut in the sidebar and note the old and new
    values in the changes list. Use the same dry-run review pattern from
@@ -749,6 +867,11 @@ and prompt without demo-specific grouping.
 
 ## 9. Service Repair
 
+This section demonstrates repairing a deployed service after the physical
+topology changes. The service intent remains unchanged, but NSO uses the
+updated topology data to recalculate where the service configuration should be
+deployed.
+
 1. State that a (fictional) problem has been reported with the link between
    `ce4` and `pe2`, and `ce4` is re-homed to `pe3`. The topology information in
    NSO needs updating to reflect that `ce4` is now connected to `pe3`. Select
@@ -757,12 +880,15 @@ and prompt without demo-specific grouping.
 2. Move the CE link for the `Berlin` endpoint by dragging the `ce4` connection
    from `pe2` to `pe3`, and commit the topology change using
    the *Commit* button in the header. The topology information in the CDB has
-   now been updated. Select the *Edit Topology* toggle again to leave edit mode.
+   now been updated, but the deployed VPN service has not yet been repaired.
+   Select the *Edit Topology* toggle again to leave edit mode.
 
    Explain that the service intent still says `Berlin` is on `ce4`, but the
    topology now says `ce4` is attached to a different PE. At this point, the
    service is no longer operational because the old PE still has configuration
-   that should now be on the new PE.
+   that should now be on the new PE. The L3VPN service uses NSO topology data
+   to determine which PE is connected to each CE, so changing the `ce4` link
+   changes what NSO calculates during redeploy.
 
 > **MCP option available:** steps 3-8 can be replaced by the MCP variant below.
 
@@ -778,8 +904,8 @@ and prompt without demo-specific grouping.
 6. Click the *Run* button. NSO uses the original service intent and
    recalculates what device configuration is required against the updated
    topology. Scroll through the device model dry-run output and point out the
-   small CE change and the larger PE migration: NSO removes service config from
-   the old PE and adds the required config on the new PE.
+   minimum diff: a small CE change and the larger PE migration. NSO removes
+   service config from the old PE and adds the required config on the new PE.
 
 7. Change the *outformat* to `native` and click the *Run* button again.
    Observe that the output shows the actual commands that will be sent to the
@@ -811,7 +937,10 @@ and prompt without demo-specific grouping.
 > 6. Once the redeploy has completed, click the *Clear and Close MCP Session*
 >    button.
 
-## 10. Optional NACM Enforcement with MCP
+## 10. NACM Enforcement with MCP
+
+This section shows the same NACM rules introduced in section 3 being enforced
+when executing MCP tools.
 
 ### 10.1 NACM Visibility
 
@@ -819,13 +948,16 @@ The assistant in the *MCP Session* viewer provides a convenient way to attempt
 to access a restricted tenant which is not currently visible in the topology UI
 (since the UI is also subject to the current NACM rules).
 
-1. Restate that the full isolation NACM rules are currently loaded and the
-   current `acme` user does not have visibility of other tenants.
+1. If not already logged in as `acme`, log out and log back in as the `acme`
+   user.
+
+2. Confirm that the fully isolated tenant access profile is currently loaded
+   and that the current `acme` user does not have visibility of other tenants.
 
    Set the right *Inspection Pane* to *MCP*, and click the chat icon in the
    *MCP Explorer* header.
 
-2. Unselect `ACME` in the *Tenant* sidebar, and then select the *Redeploy
+3. Unselect `ACME` in the *Tenant* sidebar, and then select the *Redeploy
    tenant STARK* message in the *MCP Session* window and press Enter.
 
    Observe the output. The request shows the tool call contains the correct
@@ -843,8 +975,8 @@ to access a restricted tenant which is not currently visible in the topology UI
    `tme-demo-ui` shortcut in the *Packages* section on the NSO *Home* screen.
 
 2. In the *Access Control* panel at the bottom of the *Tenant* sidebar, click
-   the *Load Shared Read Access Rule List* eye open button. Click the *Commit*
-   button in the header to commit the transaction.
+   the eye-open *Load Shared Read Access Rule List* button. Click the
+   *Commit* button in the header to commit the transaction.
 
 3. Log out and log back in as `acme`. Open the topology UI from the
    `tme-demo-ui` shortcut in the *Packages* section on the NSO *Home* screen.
@@ -857,39 +989,16 @@ to access a restricted tenant which is not currently visible in the topology UI
 3. In the *MCP Explorer*, expand *Service Tools > Tenant*.
 4. Run the *Redeploy* tool by clicking the `>` button. Observe the access
    denied response message. This confirms that the `acme` user has permission
-   to view the other tenants, but no permission to make changes.
+   to view the other tenants, but no permission to make changes. This
+   demonstrates the difference between read access and write/action access.
 
-## 11. Optional Brownfield Protection Flow
+## 11. Shared Configuration Ownership
 
-This optional section demonstrates NSO out-of-band interoperation using
-brownfield policies and `confirm-network-state`. Using `confirm-network-state`
-allows NSO to detect and classify direct device-side changes during normal
-service updates, so brownfield policies can automatically adopt approved
-additions or restore service-owned intent.
+This section demonstrates the data-centre connectivity service. The service
+uses the tenant VLAN to connect compute-facing switch ports and extend that
+VLAN through the data-centre fabric.
 
-This section uses the Datacenter Connectivity service.
-
-### 11.1 Brownfield Policies
-
-1. In the topology UI, select the `ACME` tenant and set the right
-   *Inspection Pane* to *Config*.
-
-2. Expand the *Brownfield Protection* panel at the bottom of the *Config
-   Viewer*. Expand the `connectivity-servicepoint` policy and review the ordered
-   rules:
-
-   - `restore-service-leaves` uses `sync-to-device` for service-owned leaves
-   - `adopt-service-subtree-leaves` uses `manage-by-service` for changes to
-     leaves added below a service-owned access interface
-   - `sync-unmanaged-leaves` uses `sync-from-device` for detected unmanaged
-     interface leaves inside the out-of-band processing scope
-
-   Point out that `confirm-network-state` is not enabled globally for the whole
-   demo environment. It will be manually set during the later commit operations.
-   Also point out that service-owned conflicts are restored before approved
-   additions are adopted.
-
-### 11.2 Data Centre Endpoint Creation
+### 11.1 First Data Centre Endpoint
 
 1. With `ACME` selected in the *Tenant* sidebar, expand `VLAN 501` below the
    *Data Centre* section. Data-centre endpoints are added by dragging a switch
@@ -909,29 +1018,141 @@ This section uses the Datacenter Connectivity service.
    - compute: automatically generated (compute0)
    - interface: `0/1`
 
-4. Repeat the same operation for `sw1`, setting `ios-GigabitEthernet` to `0/1`.
+4. Open the NSO *Transactions* view using the rocket icon in the header. Run a
+   `native` dry-run using the same pattern from
+   [section 6.2](#62-transaction-review-and-commit). Point out that NSO has
+   generated access-port configuration for `sw0` and fabric configuration for
+   `spine0` and `spine1`. The service uses the data-centre topology to determine
+   that `sw0` is in *Data Centre 1* and connects through those spine devices.
+
+5. Click the *Commit* button to commit the data-centre endpoint. After the
+   commit completes, press the browser back button to return to the topology UI.
+
+### 11.2 Second Data Centre Endpoint
+
+1. With `ACME` selected in the *Tenant* sidebar, expand `VLAN 501` below the
+   *Data Centre* section.
+
+2. Drag the `sw1` device icon from the topology onto the *Data Centre
+   Endpoints* section. The newly created data-centre endpoint is displayed in
+   the NSO *Configuration Editor*. Set `ios-GigabitEthernet` to `0/1`. Press
+   the browser back button to return to the topology UI.
 
    - device: `sw1`
    - compute: automatically generated (compute0)
    - interface: `0/1`
 
-5. Click the *Commit* button in the topology UI header to commit the
-   transaction.
+3. Open the NSO *Transactions* view and run a `native` dry-run. Point out that
+   the config is smaller than the first endpoint because the shared `VLAN 501`
+   fabric configuration already exists on `spine0` and `spine1`. NSO only adds
+   the newly required access-port configuration for `sw1`, while service
+   metadata tracks the shared fabric configuration references.
 
-6. Set the right *Inspection Pane* to *Config* and select `sw0`, `sw1`,
+4. Click the *Commit* button to commit the second data-centre endpoint. After
+   the commit completes, press the browser back button to return to the
+   topology UI.
+
+5. Set the right *Inspection Pane* to *Config* and select `sw0`, `sw1`,
    `spine0`, and `spine1` in the topology. Expand the devices in the
    *Config Viewer* and scroll through the configuration. The configuration
-   generated and owned by the data-centre service is highlighted in blue. Click
-   the `svc-meta` button to display the service metadata annotations.
+   generated and owned by the data-centre service is highlighted in blue.
+
+   ![Data-centre service metadata](docs/screenshots/datacentre-service-meta.png)
+
+   Click the `svc-meta` button to display the service metadata annotations.
 
    Highlight the `sw0` and `sw1` access-port VLAN configuration, and
    optionally the trunk and spine fabric configuration. Point out that NSO is
    provisioning a consistent `VLAN 501`, which the brownfield policy will
    protect later.
 
-### 11.3 Direct Device Changes
+### 11.3 First Endpoint Removal
 
-1. Click the *Connect to device console* button on the left side of the `sw0`
+1. With `ACME` selected in the *Tenant* sidebar, expand `VLAN 501` below the
+   *Data Centre* section. Click the *Delete Data Centre Endpoint* button on the
+   `sw0 compute0` item.
+
+2. Open the NSO *Transactions* view using the rocket icon in the header. Run a
+   `native` dry-run using the same pattern from
+   [section 6.2](#62-transaction-review-and-commit).
+
+   Observe that NSO removes the access-port configuration from `sw0`, but keeps
+   the shared fabric configuration on `spine0` and `spine1` (which was
+   initially created for the `sw0` endpoint) because it is still required by
+   the remaining `sw1` endpoint.
+
+3. Click the *Commit* button to commit the endpoint removal. After the commit
+   completes, press the browser back button to return to the topology UI.
+
+4. Set the right *Inspection Pane* to *Config* and select `sw1`, `spine0`, and
+   `spine1` in the topology. Expand the devices in the *Config Viewer* and
+   observe that the `sw1` access-port configuration and shared fabric
+   configuration are still present.
+
+### 11.4 Optional Remote Data Centre
+
+1. With `ACME` selected in the *Tenant* sidebar, expand `VLAN 501` below the
+   *Data Centre* section.
+
+2. Drag the `sw5` device icon from the topology onto the *Data Centre
+   Endpoints* section. The newly created data-centre endpoint is displayed in
+   the NSO *Configuration Editor*. Set `f10-GigabitEthernet` to `0/10`. Press
+   the browser back button to return to the topology UI.
+
+   - device: `sw5`
+   - compute: automatically generated (compute0)
+   - interface: `0/10`
+
+3. Open the NSO *Transactions* view and run a `native` dry-run. Point out that
+   NSO now extends the same tenant VLAN into the second data centre. As well as
+   the access configuration on `sw5` and fabric configuration on the two spines
+   (`spine2` and `spine3`) in *Data Centre 2*, NSO also configures all four DCI
+   devices (`dci0`, `dci1`, `dci2` and `dci3`) to connect the VLAN between data
+   centres.
+
+> **Presenter note:** If this change is committed, the later brownfield
+> dry-run also includes additional `spine2` and `spine3` changes when the
+> data-centre `ip-network` is updated.
+
+4. Click the *Commit* button to commit the remote data-centre endpoint. After
+   the commit completes, press the browser back button to return to the
+   topology UI.
+
+## 12. Brownfield Protection Flow
+
+This section demonstrates NSO out-of-band interoperation using brownfield
+policies and `confirm-network-state`. Using `confirm-network-state` allows NSO
+to detect and classify direct device-side changes during normal service
+updates, so brownfield policies can automatically adopt approved additions or
+restore service-owned intent.
+
+This section assumes the data-centre service from section 11 has been created.
+At minimum, `sw1` should be present under `VLAN 501`.
+
+### 12.1 Brownfield Policies
+
+1. In the topology UI, select the `ACME` tenant and set the right
+   *Inspection Pane* to *Config*.
+
+2. Expand the *Brownfield Protection* panel at the bottom of the *Config
+   Viewer*. Expand the `connectivity-servicepoint` policy and review the ordered
+   rules:
+
+   - `restore-service-leaves` uses `sync-to-device` for service-owned leaves
+   - `adopt-service-subtree-leaves` uses `manage-by-service` for changes to
+     leaves added below a service-owned access interface
+   - `sync-unmanaged-leaves` uses `sync-from-device` for detected unmanaged
+     interface leaves inside the out-of-band processing scope
+
+   Point out that `confirm-network-state` is not enabled globally for the whole
+   demo environment. It will be manually set during the later commit operations.
+   Also point out that service-owned conflicts are restored before approved
+   additions are adopted.
+
+### 12.2 Direct Device Changes
+
+1. Set the right *Inspection Pane* to *Config* and select `sw1` in the topology.
+   Click the *Connect to device console* button on the left side of the `sw1`
    item in the *Config Viewer*. This opens a direct SSH session to the switch
    and bypasses NSO.
 
@@ -941,22 +1162,22 @@ This section uses the Datacenter Connectivity service.
    ```text
    Press ENTER to start.
 
-   sw0> enable
-   sw0#
+   sw1> enable
+   sw1#
    ```
 
 3. Apply the two out-of-band changes below as separate story beats. Do not run
    `sync-from` after making the changes. The point is that the next normal NSO
    service update should discover and handle the drift.
 
-#### 11.3.1 Change 1: Adopt Extra Config in a Service-owned Subtree
+#### 12.2.1 Change 1: Adopt Extra Config in a Service-owned Subtree
 
 > **Scenario:** The NSO operations user receives a ticket saying the compute
-> attached to `sw0` needs a special MTU. The current service model does not
+> attached to `sw1` needs a special MTU. The current service model does not
 > expose MTU as an input, so the operator applies the small manual change
 > directly on the service-owned access port.
 
-- Explain the scenario above, then paste the following CLI in the `sw0` terminal
+- Explain the scenario above, then paste the following CLI in the `sw1` terminal
   to add `mtu 1520` to `GigabitEthernet 0/1`:
 
   ```text
@@ -971,14 +1192,14 @@ This section uses the Datacenter Connectivity service.
   **Later policy outcome:** the MTU is kept, stored in service metadata as extra
   out-of-band service data, and removed later when the service is removed.
 
-#### 11.3.2 Change 2: Protect Service-owned Intent
+#### 12.2.2 Change 2: Protect Service-owned Intent
 
 > **Scenario:** A network engineer is planning to provision a new unrelated
-> service on `sw0` `GigabitEthernet 0/11`. When configuring the
+> service on `sw1` `GigabitEthernet 0/11`. When configuring the
 > interface VLAN, they accidentally enter `GigabitEthernet 0/1`, which is
 > already owned by the data-centre service.
 
-- Explain the scenario above, then paste the following CLI in the `sw0` terminal
+- Explain the scenario above, then paste the following CLI in the `sw1` terminal
   to change the service-owned access VLAN on `GigabitEthernet 0/1` to an
   incorrect value:
 
@@ -997,12 +1218,12 @@ This section uses the Datacenter Connectivity service.
 After applying the two changes, exit the terminal session:
 
 ```text
-sw0# exit
+sw1# exit
 
 Connection closed.
 ```
 
-### 11.4 NSO Service Modification
+### 12.3 NSO Service Modification
 
 The device has drifted behind NSO's back, and the service operator is unaware
 of it because no `sync-from` has been run. Without `confirm-network-state`, the
@@ -1033,38 +1254,42 @@ commit flag.
 
    First, in the main `data` section, point out the device-model changes:
 
-   - `spine0` and `spine1` VLAN interface addresses are updated for the new
-     `ip-network`
-   - `sw0` shows `mtu 1520` being added to NSO's copy of the device
+   - The spine devices VLAN interface addresses are updated for the new
+     `ip-network`.
+   - `sw1` shows `mtu 1520` being added to NSO's copy of the device
      configuration
 
-   Then scroll to the `confirm-network-state` section for `sw0` and point out:
+   Then scroll to the `confirm-network-state` section for `sw1` and point out:
 
    - `out-of-band` shows what NSO discovered on the device: the VLAN was changed
-     from `500` to `999`, and `mtu 1520` was added
+     from `501` to `999`, and `mtu 1520` was added
    - `data` shows what NSO will push back to the device: the VLAN is restored
-     from `999` to the service-intended value `500`
+     from `999` to the service-intended value `501`
+
+   ![Brownfield dry-run](docs/screenshots/brownfield-confirm-network-state.png)
 
    This demonstrates both brownfield behaviours in one normal service
    transaction: the MTU is adopted into service-owned data, while the incorrect
    VLAN is repaired.
 
-6. In the same *Commit changes* drawer, **scroll back up and select
-   *confirm-network-state* again** and then click the *Commit* button to commit
-   the service update.
+   > **Presenter note:** The NSO UI clears commit flags after each dry-run.
+   > Before committing, scroll back up and select *confirm-network-state* again.
+
+6. In the same *Commit changes* drawer, select *confirm-network-state* again and
+   then click the *Commit* button to commit the service update.
 
 7. After the commit completes, press the browser back button to return to the
    topology UI.
 
-8. Set the right *Inspection Pane* to *Config* and select `sw0` in the topology.
-   Expand the `sw0` item in the *Config Viewer*.
+8. Set the right *Inspection Pane* to *Config* and select `sw1` in the topology.
+   Expand the `sw1` item in the *Config Viewer*.
 
 9. Inspect `GigabitEthernet 0/1` and point out that the access VLAN remains as
    the service-intended value. The manually added `mtu 1520` is now present
    and is annotated as out-of-band service data owned by the data-centre
    service.
 
-### 11.5 Service Deletion
+### 12.4 Service Deletion
 
 1. With `ACME` selected in the *Tenant* sidebar, expand the `VLAN 501` item
    under the *Data Centre* section. Click the *Delete Data Centre VLAN* button
@@ -1080,6 +1305,6 @@ commit flag.
 
 3. Click the *Commit* button to commit the data-centre service deletion.
 
-4. After the commit completes, return to the topology UI, select `sw0`, and
+4. After the commit completes, return to the topology UI, select `sw1`, and
    inspect `GigabitEthernet 0/1` in the *Config Viewer*. The adopted `mtu 1520`
    has been removed with the data-centre service configuration.
