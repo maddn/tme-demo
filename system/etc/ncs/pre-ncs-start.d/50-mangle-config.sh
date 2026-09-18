@@ -86,3 +86,10 @@ xmlstarlet edit --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
 xmlstarlet edit --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
            --delete "/x:ncs-config/x:cli/x:suppress-commit-message-context[text()='system']" \
            $CONF_FILE
+
+# add webui/match-host-name and set to false to disable host name checking
+xmlstarlet edit \
+    --inplace -N x=http://tail-f.com/yang/tailf-ncs-config \
+    --subnode '/x:ncs-config/x:webui' --type elem --name 'match-host-name' \
+    --value 'false' \
+    $CONF_FILE
