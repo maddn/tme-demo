@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { Fragment, memo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import InlineBtn from 'features/common/buttons/InlineBtn';
@@ -159,7 +159,7 @@ function TenantAccessControl() {
     <NacmRuleLists
       excludeRuleLists={excludeRuleLists}
       headerActions={
-        <>
+        <Fragment>
           <InlineBtn
             icon={BTN_EYE_OPEN}
             tooltip="Load Shared Read Access Rule List"
@@ -178,7 +178,7 @@ function TenantAccessControl() {
               loadProfile(tenantIsolationProfile);
             }}
           />
-        </>
+        </Fragment>
       }
     />
     )
