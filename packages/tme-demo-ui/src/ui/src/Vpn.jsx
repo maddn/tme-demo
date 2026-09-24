@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import { CUSTOMER_ROUTER } from 'constants/Icons';
 
 import ServicePane from 'features/menu/panels/ServicePane';
-import DroppableNodeList, {
+import DroppableNodeQueryList, {
   DROP_BEHAVIOUR_OPEN_NEW_ITEM
-} from 'features/menu/panels/DroppableNodeList';
+} from 'features/menu/panels/DroppableNodeQueryList';
 
 import { useQueryQuery, useMemoizeWhenFetched, swapLabels,
          createItemsSelector } from 'api/query';
@@ -89,7 +89,7 @@ export function Component({ name }) {
       { ...swapLabels(data,
         stacked ? stackedSelection : serviceSelection) }
     >
-      <DroppableNodeList
+      <DroppableNodeQueryList
         allowDrop={true}
         accept={CUSTOMER_ROUTER}
         dropBehaviour={DROP_BEHAVIOUR_OPEN_NEW_ITEM}
@@ -104,7 +104,7 @@ export function Component({ name }) {
           'as-number':    'AS Number'
         }}
         selector={vpnSelector}
-        newItemDefaults={name => (
+        dropItemDefaults={name => (
           [{ path: 'ce-device', value: name }]
         )}
       />

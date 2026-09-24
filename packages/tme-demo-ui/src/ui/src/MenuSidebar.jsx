@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import SidebarPane from 'features/common/SidebarPane';
-import NodeListWrapper from 'features/menu/panels/NodeListWrapper';
+import CreatableNodeSection from 'features/menu/panels/CreatableNodeSection';
 import ServiceList from 'features/menu/panels/ServiceList';
 import { topologyToggled,
          getOpenTopology, getOpenContextName } from 'features/menu/menuSlice';
@@ -30,7 +30,7 @@ function MenuSidebar() {
 
   return (
     <SidebarPane footer={<TenantAccessControl />}>
-      <NodeListWrapper
+      <CreatableNodeSection
         title="Tenants"
         label={Tenant.label}
         keypath={Tenant.path}
@@ -38,7 +38,7 @@ function MenuSidebar() {
       >
         {Tenant.useQuery().data?.map(({ name }) =>
           <Tenant.Component key={name} name={name} />)}
-      </NodeListWrapper>
+      </CreatableNodeSection>
       <ServiceList
         module={Vpn}
         stackedModule={Tenant}

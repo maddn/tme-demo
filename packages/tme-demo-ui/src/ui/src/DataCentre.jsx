@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import { SWITCH } from 'constants/Icons';
 
 import ServicePane from 'features/menu/panels/ServicePane';
-import DroppableNodeList, {
+import DroppableNodeQueryList, {
   DROP_BEHAVIOUR_GOTO
-} from 'features/menu/panels/DroppableNodeList';
+} from 'features/menu/panels/DroppableNodeQueryList';
 
 import { useQueryQuery, useMemoizeWhenFetched, swapLabels,
          createItemsSelector } from 'api/query';
@@ -113,7 +113,7 @@ export function Component({ name }) {
       { ...swapLabels(data,
         stacked ? stackedSelection : serviceSelection) }
     >
-      <DroppableNodeList
+      <DroppableNodeQueryList
         allowDrop={stacked}
         disableCreate={true}
         accept={SWITCH}
