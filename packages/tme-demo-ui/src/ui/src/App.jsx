@@ -50,7 +50,7 @@ function App () {
             />
           </div>
           <Sidebar>
-            <ConfigViewer />
+            <ConfigViewer showOutOfBandPolicies={true} />
             <McpExplorer
               policyRules={POLICY_RULES}
               serviceSchemas={SERVICE_SCHEMAS}
