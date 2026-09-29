@@ -56,16 +56,16 @@ const app = express()
   .all('/', proxy2nso)
   .all('/index.html', proxy2nso)
   .all('/login.html', proxy2nso)
-  .all('/jsonrpc/*', proxy2nso)
+  .all(/^\/jsonrpc\/.*$/, proxy2nso)
   .all('/restconf', proxy2nso)
-  .all('/restconf/*', proxy2nso)
+  .all(/^\/restconf\/.*$/, proxy2nso)
   .all('/mcp', proxy2nso)
-  .all('/mcp/*', proxy2nso)
+  .all(/^\/mcp\/.*$/, proxy2nso)
   .all('/webui-one', proxy2nso)
-  .all('/webui-one/*', proxy2nso)
-  .all('/dist/*', proxy2nso)
-  .all('/login/*', proxy2nso)
-  .all('/custom/*', proxy2nso);
+  .all(/^\/webui-one\/.*$/, proxy2nso)
+  .all(/^\/dist\/.*$/, proxy2nso)
+  .all(/^\/login\/.*$/, proxy2nso)
+  .all(/^\/custom\/.*$/, proxy2nso);
 
 app.listen(3000, function(err) {
     if (err) {

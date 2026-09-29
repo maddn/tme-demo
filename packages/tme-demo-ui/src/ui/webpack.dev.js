@@ -23,7 +23,11 @@ module.exports = {
       inject: 'body'
     }),
     new webpack.HotModuleReplacementPlugin(),
-    new ReactRefreshWebpackPlugin()
+    new ReactRefreshWebpackPlugin({
+      overlay: {
+        sockIntegration: 'whm'
+      }
+    })
   ],
   module: {
     rules: [
