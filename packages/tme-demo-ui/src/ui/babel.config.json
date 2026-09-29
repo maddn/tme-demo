@@ -2,21 +2,15 @@
   presets: [
     [ '@babel/preset-env', {
       targets: {
-        chrome: '92',
-        firefox: '90',
-        edge: '92',
-        safari: '14'
-      },
-      useBuiltIns: 'usage',
-      corejs: {
-        version: 3
+        chrome: '120',
+        firefox: '120',
+        edge: '120',
+        safari: '17'
       }
     }],
     [ '@babel/preset-react', {} ]
   ],
   plugins: [
-    [ '@babel/plugin-proposal-decorators', { 'legacy': true } ],
-    [ '@babel/plugin-proposal-class-properties' ],
     [ 'module-resolver', { 'root': [ './webui' ] } ]
   ]
 }
